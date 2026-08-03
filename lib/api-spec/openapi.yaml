@@ -3,20 +3,30 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: VAEP Explorer API — football analytics data endpoints
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: matches
+    description: Match operations
+  - name: players
+    description: Player operations
+  - name: leaderboard
+    description: Leaderboard operations
+  - name: scatter
+    description: Scatter plot data
+  - name: stats
+    description: Dashboard statistics
+
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,13 +34,382 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /matches:
+    get:
+      operationId: listMatches
+      tags: [matches]
+      summary: List all matches
+      responses:
+        "200":
+          description: List of matches
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Match"
+
+  /matches/{matchId}/actions:
+    get:
+      operationId: getMatchActions
+      tags: [matches]
+      summary: Get all actions in a match (for replay)
+      parameters:
+        - name: matchId
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        "200":
+          description: Ordered list of SPADL actions with VAEP values
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Action"
+        "404":
+          description: Match not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+
+  /leaderboard:
+    get:
+      operationId: getLeaderboard
+      tags: [leaderboard]
+      summary: Players ranked by VAEP score
+      parameters:
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [total_vaep, vaep_per_action, offensive_vaep, defensive_vaep]
+            default: total_vaep
+        - name: limit
+          in: query
+          schema:
+            type: number
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: number
+            default: 0
+      responses:
+        "200":
+          description: Ranked player list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LeaderboardResponse"
+
+  /players/{playerId}:
+    get:
+      operationId: getPlayer
+      tags: [players]
+      summary: Get player details and career stats
+      parameters:
+        - name: playerId
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        "200":
+          description: Player with aggregated stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlayerDetail"
+        "404":
+          description: Player not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+
+  /players/{playerId}/actions:
+    get:
+      operationId: listPlayerActions
+      tags: [players]
+      summary: Get all actions for a player
+      parameters:
+        - name: playerId
+          in: path
+          required: true
+          schema:
+            type: number
+        - name: limit
+          in: query
+          schema:
+            type: number
+            default: 100
+      responses:
+        "200":
+          description: Player actions with VAEP values
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Action"
+
+  /scatter:
+    get:
+      operationId: getScatterData
+      tags: [scatter]
+      summary: Quality vs quantity scatter data for all players
+      parameters:
+        - name: team
+          in: query
+          schema:
+            type: string
+        - name: position
+          in: query
+          schema:
+            type: string
+        - name: minActions
+          in: query
+          schema:
+            type: number
+            default: 10
+      responses:
+        "200":
+          description: Scatter plot data points
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ScatterPoint"
+
+  /stats/overview:
+    get:
+      operationId: getStatsOverview
+      tags: [stats]
+      summary: Dashboard summary statistics
+      responses:
+        "200":
+          description: Aggregate stats for the dashboard header
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatsOverview"
+
+  /stats/top-players:
+    get:
+      operationId: getTopPlayers
+      tags: [stats]
+      summary: Top 5 players by total VAEP (dashboard widget)
+      responses:
+        "200":
+          description: Top players list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PlayerStat"
+
+  /stats/action-type-breakdown:
+    get:
+      operationId: getActionTypeBreakdown
+      tags: [stats]
+      summary: VAEP contribution grouped by action type
+      responses:
+        "200":
+          description: Action type breakdown for bar chart
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ActionTypeBreakdown"
+
 components:
   schemas:
     HealthStatus:
       type: object
+      required: [status]
       properties:
         status:
           type: string
-      required:
-        - status
 
+    ApiError:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+
+    Match:
+      type: object
+      required: [id, matchId, homeTeam, awayTeam, homeScore, awayScore, competition, season]
+      properties:
+        id:
+          type: number
+        matchId:
+          type: number
+        homeTeam:
+          type: string
+        awayTeam:
+          type: string
+        homeScore:
+          type: number
+        awayScore:
+          type: number
+        competition:
+          type: string
+        season:
+          type: string
+
+    Action:
+      type: object
+      required: [id, actionId, matchId, playerId, playerName, team, periodId, timeSeconds, actionType, result, startX, startY, endX, endY, vaepValue, offensiveValue, defensiveValue]
+      properties:
+        id:
+          type: number
+        actionId:
+          type: number
+        matchId:
+          type: number
+        playerId:
+          type: number
+        playerName:
+          type: string
+        team:
+          type: string
+        periodId:
+          type: number
+        timeSeconds:
+          type: number
+        actionType:
+          type: string
+        result:
+          type: string
+        startX:
+          type: number
+        startY:
+          type: number
+        endX:
+          type: number
+        endY:
+          type: number
+        vaepValue:
+          type: number
+        offensiveValue:
+          type: number
+        defensiveValue:
+          type: number
+
+    PlayerStat:
+      type: object
+      required: [id, playerId, name, team, position, totalVaep, offensiveVaep, defensiveVaep, totalActions, vaepPerAction]
+      properties:
+        id:
+          type: number
+        playerId:
+          type: number
+        name:
+          type: string
+        team:
+          type: string
+        position:
+          type: string
+        totalVaep:
+          type: number
+        offensiveVaep:
+          type: number
+        defensiveVaep:
+          type: number
+        totalActions:
+          type: number
+        vaepPerAction:
+          type: number
+        minutesPlayed:
+          type: ["number", "null"]
+
+    PlayerDetail:
+      type: object
+      required: [id, playerId, name, team, position, stats]
+      properties:
+        id:
+          type: number
+        playerId:
+          type: number
+        name:
+          type: string
+        team:
+          type: string
+        position:
+          type: string
+        stats:
+          $ref: "#/components/schemas/PlayerStat"
+
+    LeaderboardResponse:
+      type: object
+      required: [players, total, offset, limit]
+      properties:
+        players:
+          type: array
+          items:
+            $ref: "#/components/schemas/PlayerStat"
+        total:
+          type: number
+        offset:
+          type: number
+        limit:
+          type: number
+
+    ScatterPoint:
+      type: object
+      required: [playerId, name, team, position, vaepPerAction, totalActions, totalVaep]
+      properties:
+        playerId:
+          type: number
+        name:
+          type: string
+        team:
+          type: string
+        position:
+          type: string
+        vaepPerAction:
+          type: number
+        totalActions:
+          type: number
+        totalVaep:
+          type: number
+
+    StatsOverview:
+      type: object
+      required: [totalPlayers, totalMatches, totalActions, avgVaepPerAction, topPlayer, topPlayerVaep]
+      properties:
+        totalPlayers:
+          type: number
+        totalMatches:
+          type: number
+        totalActions:
+          type: number
+        avgVaepPerAction:
+          type: number
+        topPlayer:
+          type: string
+        topPlayerVaep:
+          type: number
+
+    ActionTypeBreakdown:
+      type: object
+      required: [actionType, totalVaep, count, avgVaep]
+      properties:
+        actionType:
+          type: string
+        totalVaep:
+          type: number
+        count:
+          type: number
+        avgVaep:
+          type: number
