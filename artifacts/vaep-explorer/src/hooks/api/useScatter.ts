@@ -1,9 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
-import type { ScatterPoint } from '@workspace/api-client-react';
-import { mockScatterData } from '@/mocks/scatter';
+import { getScatterData, type GetScatterDataParams, type ScatterPoint } from '@workspace/api-client-react';
 
-export const useGetScatterData = (params?: { team?: string; position?: string; minActions?: number }) =>
+export const useGetScatterData = (params?: GetScatterDataParams) =>
   useQuery<ScatterPoint[]>({
     queryKey: ['scatter', params],
-    queryFn: () => Promise.resolve(mockScatterData),
+    queryFn: () => getScatterData(params),
   });

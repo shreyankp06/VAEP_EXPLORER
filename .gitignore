@@ -10,6 +10,18 @@ out-tsc
 
 # dependencies
 node_modules
+.venv/
+package-lock.json
+__pycache__/
+*.py[cod]
+
+# local configuration and generated data
+.env
+.env.*
+!.env.example
+data/statsbomb/
+data/seed_data.json
+*.log
 
 # IDEs and editors
 /.idea

@@ -1,9 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
-import type { LeaderboardResponse } from '@workspace/api-client-react';
-import { mockLeaderboard } from '@/mocks/leaderboard';
+import { getLeaderboard, type GetLeaderboardParams, type LeaderboardResponse } from '@workspace/api-client-react';
 
-export const useGetLeaderboard = (params?: { sort?: string; limit?: number; offset?: number }) =>
+export const useGetLeaderboard = (params?: GetLeaderboardParams) =>
   useQuery<LeaderboardResponse>({
     queryKey: ['leaderboard', params],
-    queryFn: () => Promise.resolve(mockLeaderboard),
+    queryFn: () => getLeaderboard(params),
   });

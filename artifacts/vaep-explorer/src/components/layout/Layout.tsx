@@ -114,7 +114,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
               </span>
-              <span className="text-xs font-medium text-primary">Live Data</span>
+              <span className="text-xs font-medium text-primary">Mock data</span>
             </div>
           </div>
         </header>

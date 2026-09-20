@@ -1,23 +1,20 @@
 import { useQuery } from '@tanstack/react-query';
-import type { StatsOverview, PlayerStat, ActionTypeBreakdown } from '@workspace/api-client-react';
-import { mockStatsOverview } from '@/mocks/statsOverview';
-import { mockTopPlayers } from '@/mocks/players';
-import { mockActionTypeBreakdown } from '@/mocks/actionTypes';
+import { getActionTypeBreakdown, getStatsOverview, getTopPlayers, type StatsOverview, type PlayerStat, type ActionTypeBreakdown } from '@workspace/api-client-react';
 
 export const useGetStatsOverview = () =>
   useQuery<StatsOverview>({
     queryKey: ['stats', 'overview'],
-    queryFn: () => Promise.resolve(mockStatsOverview),
+    queryFn: () => getStatsOverview(),
   });
 
 export const useGetTopPlayers = () =>
   useQuery<PlayerStat[]>({
     queryKey: ['stats', 'top-players'],
-    queryFn: () => Promise.resolve(mockTopPlayers),
+    queryFn: () => getTopPlayers(),
   });
 
 export const useGetActionTypeBreakdown = () =>
   useQuery<ActionTypeBreakdown[]>({
     queryKey: ['stats', 'action-type-breakdown'],
-    queryFn: () => Promise.resolve(mockActionTypeBreakdown),
+    queryFn: () => getActionTypeBreakdown(),
   });

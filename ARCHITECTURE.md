@@ -1,6 +1,6 @@
 # VAEP Explorer — Architecture Overview
 
-> **Status:** Draft for review before implementation begins.
+> **Status:** Implemented MVP. Last reconciled with the supplied SRS on September 20, 2026.
 
 ---
 
@@ -12,6 +12,8 @@
 1. **Action Replay** — animated pitch showing action sequences with VAEP values
 2. **VAEP Leaderboard** — ranked table of players by cumulative VAEP score
 3. **Quality vs Quantity Scatter Plot** — VAEP per action vs total actions per player
+
+The SRS also describes a Shot Rewinder and a full League Explorer. Those are lower-priority follow-on modules and are tracked in `docs/REQUIREMENTS_TRACEABILITY.md`; they are not presented as completed features.
 
 ---
 
@@ -63,7 +65,7 @@
 | Server state | TanStack React Query | Auto caching, loading/error states, ideal for dashboards |
 | Backend | Express (Node.js) | Already configured in monorepo, team knows JS/TS |
 | ORM | Drizzle ORM | TypeScript-first, migrations are simple SQL |
-| Database | PostgreSQL | Scales beyond SQLite, already provisioned in Replit |
+| Database | Supabase Postgres | Managed PostgreSQL, pooled connections, RLS, and a simple free-tier handoff |
 | API Contract | OpenAPI 3.1 + Orval codegen | Single source of truth, auto-generates typed hooks |
 
 ---
@@ -240,7 +242,7 @@ artifacts/
 │   │   ├── scatter.ts
 │   │   └── stats.ts           (dashboard aggregates)
 │   └── app.ts
-├── vaep-explorer/src/          (react-vite artifact — created next)
+├── vaep-explorer/src/          (React + Vite application)
 │   ├── pages/
 │   │   ├── DashboardPage.tsx
 │   │   ├── ReplayPage.tsx
@@ -304,4 +306,4 @@ lib/
 
 ---
 
-*Ready to build? Approve this architecture and implementation starts immediately.*
+For setup and operating instructions, start with `README.md`. For the exact SRS coverage, see `docs/REQUIREMENTS_TRACEABILITY.md`.
