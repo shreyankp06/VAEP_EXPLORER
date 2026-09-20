@@ -26,6 +26,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--output", type=Path, default=Path("data/seed_data.json"))
     parser.add_argument("--competition-id", type=int, required=True)
     parser.add_argument("--season-id", type=int, required=True)
+    parser.add_argument(
+        "--max-matches",
+        type=int,
+        help="Process only the first N matches (useful for a reproducible demo subset)",
+    )
     parser.add_argument("--test-size", type=float, default=0.2)
     parser.add_argument("--random-state", type=int, default=42)
     return parser.parse_args()
@@ -52,10 +57,23 @@ def build_features(actions: pd.DataFrame, home_team_id: int) -> pd.DataFrame:
     return pd.concat([feature_function(game_states) for feature_function in feature_functions], axis=1)
 
 
+def prepare_features(features: pd.DataFrame) -> pd.DataFrame:
+    """Convert socceraction feature frames into stable numeric model input."""
+    prepared = features.copy()
+    for column in prepared.columns:
+        if isinstance(prepared[column].dtype, pd.CategoricalDtype):
+            prepared[column] = prepared[column].cat.codes.replace(-1, pd.NA)
+    return (
+        prepared.apply(pd.to_numeric, errors="coerce")
+        .replace([float("inf"), float("-inf")], pd.NA)
+        .fillna(0)
+        .astype(float)
+    )
+
+
 def train_models(features: pd.DataFrame, labels: pd.DataFrame, test_size: float, random_state: int) -> dict[str, XGBClassifier]:
-    usable = features.replace([float("inf"), float("-inf")], pd.NA).dropna().index
-    x_values = features.loc[usable]
-    y_values = labels.loc[usable]
+    x_values = prepare_features(features)
+    y_values = labels.loc[x_values.index]
     if len(x_values) < 2:
         raise ValueError("At least two usable actions are required to train VAEP models")
 
@@ -82,9 +100,13 @@ def train_models(features: pd.DataFrame, labels: pd.DataFrame, test_size: float,
 
 
 def value_actions(actions: pd.DataFrame, features: pd.DataFrame, models: dict[str, XGBClassifier]) -> pd.DataFrame:
-    valid_features = features.replace([float("inf"), float("-inf")], pd.NA).fillna(0)
+    valid_features = prepare_features(features)
     probabilities = {
-        target: model.predict_proba(valid_features)[:, 1]
+        target: pd.Series(
+            model.predict_proba(valid_features)[:, 1],
+            index=actions.index,
+            name=target,
+        )
         for target, model in models.items()
     }
     return vaep_formula.value(actions, probabilities["scores"], probabilities["concedes"])
@@ -123,6 +145,10 @@ def main() -> None:
     args = parse_args()
     loader = StatsBombLoader(getter="local", root=str(args.data_root))
     games = loader.games(competition_id=args.competition_id, season_id=args.season_id)
+    if args.max_matches is not None:
+        if args.max_matches < 1:
+            raise ValueError("--max-matches must be at least 1")
+        games = games.head(args.max_matches)
     if games.empty:
         raise ValueError("No matches found for the supplied competition and season")
 
@@ -176,24 +202,26 @@ def main() -> None:
         lineup = loader.players(match_id)
         for player in lineup.itertuples(index=False):
             player_id = int(player.player_id)
+            team_name = str(teams.get(player.team_id, "Unknown"))
             players[player_id] = {
                 "playerId": player_id,
                 "name": str(player.player_name),
-                "team": str(player.team_name),
+                "team": team_name,
                 "position": str(getattr(player, "starting_position_name", "Unknown") or "Unknown"),
             }
-            stats.setdefault(
-                player_id,
-                {
+            if player_id not in stats:
+                stats[player_id] = {
                     "playerId": player_id,
-                    "team": str(player.team_name),
+                    "team": team_name,
                     "totalVaep": 0.0,
                     "offensiveVaep": 0.0,
                     "defensiveVaep": 0.0,
                     "totalActions": 0,
                     "vaepPerAction": 0.0,
-                    "minutesPlayed": number(getattr(player, "minutes_played", 0)),
-                },
+                    "minutesPlayed": 0.0,
+                }
+            stats[player_id]["minutesPlayed"] += number(
+                getattr(player, "minutes_played", 0)
             )
         for action, value in zip(actions.to_dict("records"), values.to_dict("records")):
             player_id = int(action["player_id"])

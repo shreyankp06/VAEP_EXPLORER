@@ -43,7 +43,7 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for the component and data-flow design.
 
 ## Configure Supabase
 
-1. In Supabase, open **SQL Editor** and run `supabase/schema.sql` once.
+1. In Supabase, open **SQL Editor** and run `supabase/schema.sql`, or use `pnpm db:setup` after configuring `.env`.
 2. Open **Connect** and copy a PostgreSQL direct or session-pooler connection string.
 3. Copy `.env.example` to `.env` and replace `DATABASE_URL` with that connection string.
 
@@ -55,6 +55,8 @@ For more detail, see [SUPABASE_SETUP.md](SUPABASE_SETUP.md).
 
 ```powershell
 pnpm install --frozen-lockfile
+pnpm db:setup
+pnpm db:check
 
 $env:PORT = "3000"
 $env:DATABASE_URL = (Get-Content .env | Where-Object { $_ -like "DATABASE_URL=*" }).Substring(13)
@@ -81,7 +83,8 @@ Download StatsBomb Open Data into `data/statsbomb`, install the pipeline depende
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install -r pipeline\requirements.txt
-python pipeline\run_vaep.py --data-root data\statsbomb --competition-id 43 --season-id 106 --output data\seed_data.json
+python pipeline\download_statsbomb.py --data-root data\statsbomb --competition-id 43 --season-id 106 --max-matches 12
+python pipeline\run_vaep.py --data-root data\statsbomb --competition-id 43 --season-id 106 --max-matches 12 --output data\seed_data.json
 pnpm --filter @workspace/scripts seed
 ```
 

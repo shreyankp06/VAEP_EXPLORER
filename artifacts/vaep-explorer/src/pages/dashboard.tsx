@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useGetActionTypeBreakdown, useGetStatsOverview, useGetTopPlayers } from '@/hooks/api/useStats';
-import { useGetMatchActions } from '@/hooks/api/useMatches';
+import { useGetMatchActions, useListMatches } from '@/hooks/api/useMatches';
 
 const actionChartConfig = {
   totalVaep: { label: 'Total VAEP', color: 'hsl(var(--primary))' },
@@ -14,6 +14,7 @@ const actionChartConfig = {
 
 const formatNumber = (value: number) => new Intl.NumberFormat('en-US').format(value);
 const formatVaep = (value: number) => value.toFixed(3);
+const formatSignedVaep = (value: number) => `${value >= 0 ? '+' : ''}${formatVaep(value)}`;
 
 function DashboardLoading() {
   return (
@@ -33,13 +34,14 @@ export default function DashboardPage() {
   const overview = useGetStatsOverview();
   const topPlayers = useGetTopPlayers();
   const actionTypes = useGetActionTypeBreakdown();
-  const recentActions = useGetMatchActions(1002);
+  const matches = useListMatches();
+  const recentActions = useGetMatchActions(matches.data?.[0]?.matchId);
 
-  if (overview.isLoading || topPlayers.isLoading || actionTypes.isLoading || recentActions.isLoading) {
+  if (overview.isLoading || topPlayers.isLoading || actionTypes.isLoading || matches.isLoading || recentActions.isLoading) {
     return <DashboardLoading />;
   }
 
-  if (overview.isError || topPlayers.isError || actionTypes.isError || recentActions.isError) {
+  if (overview.isError || topPlayers.isError || actionTypes.isError || matches.isError || recentActions.isError) {
     return (
       <Card className="border-destructive/40">
         <CardContent className="py-12 text-center">
@@ -112,7 +114,7 @@ export default function DashboardPage() {
         <Card className="xl:col-span-2">
           <CardHeader><CardTitle>Recent high-value actions</CardTitle></CardHeader>
           <CardContent className="space-y-4">
-            {actions.map((action) => <div className="flex items-start justify-between gap-3 border-b pb-4 last:border-0 last:pb-0" key={action.id}><div><p className="font-medium capitalize">{action.actionType}</p><p className="text-sm text-muted-foreground">{action.playerName} · {action.team}</p><p className="mt-1 text-xs text-muted-foreground">{action.result} in period {action.periodId}</p></div><div className="flex items-center gap-1 text-sm font-semibold text-primary"><Award className="h-4 w-4" />+{formatVaep(action.vaepValue)}</div></div>)}
+            {actions.map((action) => <div className="flex items-start justify-between gap-3 border-b pb-4 last:border-0 last:pb-0" key={action.id}><div><p className="font-medium capitalize">{action.actionType}</p><p className="text-sm text-muted-foreground">{action.playerName} · {action.team}</p><p className="mt-1 text-xs text-muted-foreground">{action.result} in period {action.periodId}</p></div><div className="flex items-center gap-1 text-sm font-semibold text-primary"><Award className="h-4 w-4" />{formatSignedVaep(action.vaepValue)}</div></div>)}
           </CardContent>
         </Card>
       </section>

@@ -7,6 +7,8 @@
     "typecheck:libs": "tsc --build",
     "typecheck": "pnpm run typecheck:libs && pnpm --workspace-concurrency=1 -r --filter \"./artifacts/**\" --filter \"./scripts\" --if-present run typecheck",
     "db:push": "pnpm --filter @workspace/db push",
+    "db:setup": "pnpm --filter @workspace/scripts setup-db",
+    "db:check": "pnpm --filter @workspace/scripts check-db",
     "db:seed": "pnpm --filter @workspace/scripts seed"
   },
   "private": true,

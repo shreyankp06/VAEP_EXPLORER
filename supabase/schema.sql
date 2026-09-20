@@ -80,7 +80,7 @@ drop policy if exists "public read players" on public.players;
 drop policy if exists "public read actions" on public.actions;
 drop policy if exists "public read player stats" on public.player_stats;
 
-create policy "public read matches" on public.matches for select using (true);
-create policy "public read players" on public.players for select using (true);
-create policy "public read actions" on public.actions for select using (true);
-create policy "public read player stats" on public.player_stats for select using (true);
+create policy "public read matches" on public.matches for select to anon, authenticated using (true);
+create policy "public read players" on public.players for select to anon, authenticated using (true);
+create policy "public read actions" on public.actions for select to anon, authenticated using (true);
+create policy "public read player stats" on public.player_stats for select to anon, authenticated using (true);

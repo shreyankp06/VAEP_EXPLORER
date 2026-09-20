@@ -28,6 +28,12 @@ if (!["postgres:", "postgresql:"].includes(parsedDatabaseUrl.protocol)) {
 if (!parsedDatabaseUrl.searchParams.has("sslmode")) {
   parsedDatabaseUrl.searchParams.set("sslmode", "require");
 }
+if (
+  parsedDatabaseUrl.searchParams.get("sslmode") === "require" &&
+  !parsedDatabaseUrl.searchParams.has("uselibpqcompat")
+) {
+  parsedDatabaseUrl.searchParams.set("uselibpqcompat", "true");
+}
 
 const configuredPoolMax = Number(process.env.DB_POOL_MAX ?? 10);
 const poolMax = Number.isInteger(configuredPoolMax) && configuredPoolMax > 0

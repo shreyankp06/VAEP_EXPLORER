@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "hello": "tsx ./src/hello.ts",
+    "setup-db": "node --env-file-if-exists=../.env --import tsx ./src/setup-db.ts",
+    "check-db": "node --env-file-if-exists=../.env --import tsx ./src/check-db.ts",
     "seed": "node --env-file-if-exists=../.env --import tsx ./src/seed.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },

@@ -1,6 +1,8 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { z } from "zod";
+import { sql } from "drizzle-orm";
 import { db, actions, matches, players, playerStats } from "@workspace/db";
 
 const seedSchema = z.object({
@@ -57,41 +59,60 @@ const seedSchema = z.object({
 
 type SeedData = z.infer<typeof seedSchema>;
 
+function chunks<T>(items: T[], size: number): T[][] {
+  return Array.from(
+    { length: Math.ceil(items.length / size) },
+    (_, index) => items.slice(index * size, (index + 1) * size),
+  );
+}
+
 async function loadSeedData(): Promise<SeedData> {
+  const workspaceRoot = fileURLToPath(new URL("../../", import.meta.url));
   const seedFile = process.env.SEED_FILE ?? path.join("data", "seed_data.json");
-  const contents = await readFile(path.resolve(seedFile), "utf8");
+  const contents = await readFile(path.resolve(workspaceRoot, seedFile), "utf8");
   return seedSchema.parse(JSON.parse(contents));
 }
 
 async function seedDatabase(seedData: SeedData): Promise<void> {
   await db.transaction(async (transaction) => {
     const matchIds = new Map<number, number>();
-    for (const match of seedData.matches) {
-      const [row] = await transaction
+    const matchRows = await transaction
         .insert(matches)
-        .values(match)
+        .values(seedData.matches)
         .onConflictDoUpdate({
           target: matches.matchId,
-          set: match,
+          set: {
+            homeTeam: sql`excluded.home_team`,
+            awayTeam: sql`excluded.away_team`,
+            homeScore: sql`excluded.home_score`,
+            awayScore: sql`excluded.away_score`,
+            competition: sql`excluded.competition`,
+            season: sql`excluded.season`,
+          },
         })
         .returning({ id: matches.id, matchId: matches.matchId });
+    for (const row of matchRows) {
       matchIds.set(row.matchId, row.id);
     }
 
     const playerIds = new Map<number, number>();
-    for (const player of seedData.players) {
-      const [row] = await transaction
+    const playerRows = await transaction
         .insert(players)
-        .values(player)
+        .values(seedData.players)
         .onConflictDoUpdate({
           target: players.playerId,
-          set: player,
+          set: {
+            name: sql`excluded.name`,
+            team: sql`excluded.team`,
+            position: sql`excluded.position`,
+          },
         })
         .returning({ id: players.id, playerId: players.playerId });
+    for (const row of playerRows) {
       playerIds.set(row.playerId, row.id);
     }
 
-    for (const action of seedData.actions) {
+    const actionRows = seedData.actions.map((action) => {
       const matchId = matchIds.get(action.matchId);
       const playerId = playerIds.get(action.playerId);
       if (matchId === undefined || playerId === undefined) {
@@ -99,48 +120,54 @@ async function seedDatabase(seedData: SeedData): Promise<void> {
           `Action ${action.actionId} references an unknown match or player`,
         );
       }
+      return { ...action, matchId, playerId };
+    });
 
+    for (const batch of chunks(actionRows, 500)) {
       await transaction
         .insert(actions)
-        .values({ ...action, matchId, playerId })
+        .values(batch)
         .onConflictDoUpdate({
           target: [actions.matchId, actions.actionId],
           set: {
-            playerId,
-            periodId: action.periodId,
-            timeSeconds: action.timeSeconds,
-            actionType: action.actionType,
-            result: action.result,
-            startX: action.startX,
-            startY: action.startY,
-            endX: action.endX,
-            endY: action.endY,
-            vaepValue: action.vaepValue,
-            offensiveValue: action.offensiveValue,
-            defensiveValue: action.defensiveValue,
+            playerId: sql`excluded.player_id`,
+            periodId: sql`excluded.period_id`,
+            timeSeconds: sql`excluded.time_seconds`,
+            actionType: sql`excluded.action_type`,
+            result: sql`excluded.result`,
+            startX: sql`excluded.start_x`,
+            startY: sql`excluded.start_y`,
+            endX: sql`excluded.end_x`,
+            endY: sql`excluded.end_y`,
+            vaepValue: sql`excluded.vaep_value`,
+            offensiveValue: sql`excluded.offensive_value`,
+            defensiveValue: sql`excluded.defensive_value`,
           },
         });
     }
 
-    for (const stats of seedData.playerStats) {
+    const statsRows = seedData.playerStats.map((stats) => {
       const playerId = playerIds.get(stats.playerId);
       if (playerId === undefined) {
         throw new Error(`Stats reference an unknown player ${stats.playerId}`);
       }
+      return { ...stats, playerId };
+    });
 
+    for (const batch of chunks(statsRows, 500)) {
       await transaction
         .insert(playerStats)
-        .values({ ...stats, playerId })
+        .values(batch)
         .onConflictDoUpdate({
           target: playerStats.playerId,
           set: {
-            team: stats.team,
-            totalVaep: stats.totalVaep,
-            offensiveVaep: stats.offensiveVaep,
-            defensiveVaep: stats.defensiveVaep,
-            totalActions: stats.totalActions,
-            vaepPerAction: stats.vaepPerAction,
-            minutesPlayed: stats.minutesPlayed,
+            team: sql`excluded.team`,
+            totalVaep: sql`excluded.total_vaep`,
+            offensiveVaep: sql`excluded.offensive_vaep`,
+            defensiveVaep: sql`excluded.defensive_vaep`,
+            totalActions: sql`excluded.total_actions`,
+            vaepPerAction: sql`excluded.vaep_per_action`,
+            minutesPlayed: sql`excluded.minutes_played`,
           },
         });
     }

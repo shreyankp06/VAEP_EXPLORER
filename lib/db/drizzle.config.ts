@@ -20,6 +20,12 @@ if (!["postgres:", "postgresql:"].includes(databaseUrl.protocol)) {
 if (!databaseUrl.searchParams.has("sslmode")) {
   databaseUrl.searchParams.set("sslmode", "require");
 }
+if (
+  databaseUrl.searchParams.get("sslmode") === "require" &&
+  !databaseUrl.searchParams.has("uselibpqcompat")
+) {
+  databaseUrl.searchParams.set("uselibpqcompat", "true");
+}
 
 export default defineConfig({
   schema: path.join(__dirname, "./src/schema/index.ts"),

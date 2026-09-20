@@ -30,6 +30,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
 
   useEffect(() => {
+    if (window.matchMedia('(max-width: 768px)').matches) {
+      setCollapsed(true);
+      return;
+    }
     const saved = localStorage.getItem('sidebar-collapsed');
     if (saved) {
       setCollapsed(saved === 'true');
@@ -85,6 +89,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
         <div className="p-4 border-t border-sidebar-border flex flex-col gap-4">
           <button 
+            aria-label={collapsed ? 'Expand navigation' : 'Collapse navigation'}
             onClick={toggleSidebar}
             className="flex items-center justify-center h-8 w-full rounded-md text-sidebar-foreground/50 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-colors"
           >
@@ -94,7 +99,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           {!collapsed && (
             <div className="text-xs text-sidebar-foreground/40 leading-tight">
               Valuing Actions by Estimating Probabilities. 
-              <div className="mt-1 font-medium text-sidebar-foreground/60">European Top 5 Leagues</div>
+              <div className="mt-1 font-medium text-sidebar-foreground/60">StatsBomb Open Data</div>
             </div>
           )}
         </div>
@@ -114,7 +119,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
               </span>
-              <span className="text-xs font-medium text-primary">Mock data</span>
+              <span className="text-xs font-medium text-primary">Live Supabase</span>
             </div>
           </div>
         </header>

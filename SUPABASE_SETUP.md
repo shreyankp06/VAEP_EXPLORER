@@ -31,7 +31,7 @@ Copy-Item .env.example .env
 # Edit .env and set DATABASE_URL to the Supabase connection string.
 
 pnpm install --frozen-lockfile
-pnpm --filter @workspace/db push
+pnpm db:setup
 pnpm --filter @workspace/scripts seed
 
 $env:PORT = "3000"
@@ -50,7 +50,7 @@ pnpm --filter @workspace/vaep-explorer dev
 
 ## Supabase security
 
-The API uses the database connection string only on the server and enforces SSL. The pool defaults to 10 connections; set `DB_POOL_MAX` lower for a small deployment or when required by the chosen Supabase pooler.
+The API uses the database connection string only on the server and enforces SSL. For `node-postgres` 8, the application adds `uselibpqcompat=true` when `sslmode=require` so the mode follows standard libpq encryption semantics. For full certificate-chain verification, download the project CA certificate and use `sslmode=verify-full` with the driver configured to trust that certificate. The pool defaults to 10 connections; set `DB_POOL_MAX` lower for a small deployment or when required by the chosen Supabase pooler.
 
 Every public table has RLS enabled. The schema revokes all privileges from `anon` and `authenticated`, then grants only `SELECT` with explicit public-read policies. There are no public insert, update, or delete policies. If authentication is added later, replace these policies with ownership-aware policies.
 

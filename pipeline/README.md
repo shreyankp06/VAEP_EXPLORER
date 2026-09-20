@@ -23,13 +23,20 @@ statsbomb/
 ## Generate seed data
 
 ```powershell
+python pipeline\download_statsbomb.py `
+  --data-root data\statsbomb `
+  --competition-id 43 `
+  --season-id 106 `
+  --max-matches 12
+
 python pipeline\run_vaep.py `
   --data-root data\statsbomb `
   --competition-id 43 `
   --season-id 106 `
+  --max-matches 12 `
   --output data\seed_data.json
 ```
 
-The model is trained from the selected competition and season. Use several matches; a single match is not a meaningful training set. The output contains `matches`, `players`, `actions`, and `playerStats` using external StatsBomb IDs. The Node importer resolves those IDs to internal PostgreSQL foreign keys.
+The downloader defaults to a 12-match FIFA World Cup 2022 subset so the demo is reproducible without cloning the entire StatsBomb repository. Use the same `--max-matches` value for downloading and processing. The model is trained from the selected subset; a single match is not a meaningful training set. The output contains `matches`, `players`, `actions`, and `playerStats` using external StatsBomb IDs. The Node importer resolves those IDs to internal PostgreSQL foreign keys.
 
 StatsBomb Open Data is subject to its user agreement and attribution requirements.
