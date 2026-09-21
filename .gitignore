@@ -19,9 +19,15 @@ __pycache__/
 .env
 .env.*
 !.env.example
+attached_assets/
 data/statsbomb/
 data/seed_data.json
 *.log
+
+# Replit workspace metadata
+.replit
+replit.nix
+**/.replit-artifact/
 
 # IDEs and editors
 /.idea
