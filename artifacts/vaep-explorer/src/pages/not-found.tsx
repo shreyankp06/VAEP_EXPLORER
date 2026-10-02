@@ -1,23 +1,15 @@
-import { Card, CardContent } from '@/components/ui/card';
-import { AlertCircle } from 'lucide-react';
+import { Link } from 'wouter';
+import { PaperPanel } from '@/components/archive/Ornaments';
 
 export default function NotFound() {
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-gray-50">
-      <Card className="w-full max-w-md mx-4">
-        <CardContent className="pt-6">
-          <div className="flex mb-4 gap-2">
-            <AlertCircle className="h-8 w-8 text-red-500" />
-            <h1 className="text-2xl font-bold text-gray-900">
-              404 Page Not Found
-            </h1>
-          </div>
-
-          <p className="mt-4 text-sm text-gray-600">
-            Did you forget to add the page to the router?
-          </p>
-        </CardContent>
-      </Card>
-    </div>
+    <PaperPanel className="py-20 text-center">
+      <p className="label-meta">Erratum</p>
+      <h1 className="font-display mt-2 text-5xl text-primary">This plate is missing</h1>
+      <p className="mt-3 text-muted-foreground">The requested page is not in the archive.</p>
+      <Link className="mt-6 inline-block border-b border-primary font-sans text-sm uppercase tracking-[0.18em] text-primary" href="/">
+        Return to the atlas
+      </Link>
+    </PaperPanel>
   );
 }

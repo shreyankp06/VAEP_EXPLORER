@@ -16,9 +16,10 @@ const queryClient = new QueryClient();
 function Router() {
   return (
     <Layout>
-      <Suspense fallback={<div className="flex min-h-64 items-center justify-center text-sm text-muted-foreground">Loading page…</div>}>
+      <Suspense fallback={<div className="flex min-h-64 items-center justify-center font-sans text-sm tracking-[0.16em] uppercase text-muted-foreground">Opening archive…</div>}>
         <Switch>
-          <Route path="/" component={DashboardPage} />
+          <Route path="/" component={ReplayPage} />
+          <Route path="/atlas" component={DashboardPage} />
           <Route path="/leaderboard" component={LeaderboardPage} />
           <Route path="/replay" component={ReplayPage} />
           <Route path="/scatter" component={ScatterPage} />
