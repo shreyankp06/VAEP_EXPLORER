@@ -9,7 +9,7 @@ type Marker = {
   team: string;
   x: number;
   y: number;
-  isNext: boolean;
+  isPartner: boolean;
 };
 
 export type PlayerPitchDetail = {
@@ -23,13 +23,16 @@ function uniqueMarkers(actions: Action[], selected?: Action): Marker[] {
   // In an action frame the pitch is a close-up of the selected action and its
   // immediate continuation, not a full starting XI. Showing the next actor
   // gives the viewer a useful read of where the sequence is going next.
-  const nextAction = selected
-    ? actions.find((action) => action.timeSeconds > selected.timeSeconds || (action.timeSeconds === selected.timeSeconds && action.id > selected.id))
+  const partnerAction = selected && isTwoPlayerAction(selected)
+    ? actions.find((action) => {
+      const isAfter = action.timeSeconds > selected.timeSeconds || (action.timeSeconds === selected.timeSeconds && action.id > selected.id);
+      return isAfter && action.team === selected.team && action.timeSeconds - selected.timeSeconds <= 8;
+    })
     : undefined;
   // Put the next action first so the selected actor remains anchored to the
   // current frame when both actions belong to the same player.
   const scopedActions = selected
-    ? [...(nextAction ? [nextAction] : []), selected]
+    ? [...(partnerAction ? [partnerAction] : []), selected]
     : actions;
   for (const action of scopedActions) {
     latest.set(action.playerId, {
@@ -38,10 +41,15 @@ function uniqueMarkers(actions: Action[], selected?: Action): Marker[] {
       team: action.team,
       x: action.startX,
       y: PITCH_HEIGHT - action.startY,
-      isNext: selected ? action.actionId !== selected.actionId : false,
+      isPartner: selected ? action.actionId !== selected.actionId : false,
     });
   }
   return [...latest.values()];
+}
+
+function isTwoPlayerAction(action: Action) {
+  const type = action.actionType.toLowerCase().replace(/[-_]/g, ' ');
+  return ['pass', 'through ball', 'cross', 'assist', 'corner', 'free kick', 'throw in'].some((name) => type.includes(name));
 }
 
 function PitchMarkings() {
@@ -131,9 +139,12 @@ export function EngravedPitch({
             />
             <circle className="pitch-pulse" cx={selected.startX} cy={startY} fill="none" r="3.2" stroke="currentColor" strokeWidth="0.35" />
             <circle cx={selected.startX} cy={startY} fill="hsl(42 42% 95%)" r="1.7" stroke="currentColor" strokeWidth="0.7" />
-            <circle className="pitch-ball" cx={selected.startX} cy={startY} fill="currentColor" r="1.05">
+            <g className="pitch-ball" transform={`translate(${selected.startX} ${startY})`}>
+              <circle cx="0" cy="0" fill="hsl(42 42% 95%)" r="1.45" stroke="currentColor" strokeWidth="0.35" />
+              <path d="M-0.5 -0.65 L0.35 -0.45 L0.62 0.25 L0 0.72 L-0.65 0.3 L-0.5 -0.65Z" fill="none" stroke="currentColor" strokeWidth="0.18" />
+              <path d="M-0.5 -0.65 L-1.05 -0.25 M0.35 -0.45 L0.95 -0.72 M0.62 0.25 L1.05 0.58 M0 0.72 L-0.2 1.2 M-0.65 0.3 L-1.12 0.65" fill="none" stroke="currentColor" strokeWidth="0.16" />
               <animateMotion dur="850ms" fill="freeze" path={`M 0 0 L ${selected.endX - selected.startX} ${endY - startY}`} />
-            </circle>
+            </g>
             <circle cx={selected.endX} cy={endY} fill="currentColor" r="1.4" />
           </g>
         ) : null}
@@ -144,8 +155,8 @@ export function EngravedPitch({
           return (
             <g
               key={marker.playerId}
-              aria-label={`${marker.name}${marker.isNext ? ', next action' : ''}`}
-              className={cn('pitch-player cursor-pointer', marker.isNext && 'pitch-player-next')}
+              aria-label={`${marker.name}${marker.isPartner ? ', receiving player' : ''}`}
+              className={cn('pitch-player cursor-pointer', marker.isPartner && 'pitch-player-partner')}
               onClick={() => {
                 const related = [...actions].reverse().find((action) => action.playerId === marker.playerId);
                 if (related) onSelectAction?.(related.actionId);
@@ -185,15 +196,15 @@ export function EngravedPitch({
               >
                 {playerAbbr(marker.name)}
               </text>
-              {marker.isNext ? (
+              {marker.isPartner ? (
                 <text className="pitch-next-label" fill="currentColor" fontFamily="Source Sans 3, sans-serif" fontSize="1.7" letterSpacing="0.12" textAnchor="middle" x={marker.x} y={marker.y - 4.8}>
-                  NEXT
+                  RECEIVER
                 </text>
               ) : null}
               {hoveredPlayerId === marker.playerId ? (
                 <foreignObject className="pitch-dossier" height="27" width="42" x={marker.x < PITCH_WIDTH / 2 ? marker.x + 4 : marker.x - 46} y={marker.y < PITCH_HEIGHT / 2 ? marker.y + 3 : marker.y - 30}>
                   <div className="pitch-dossier-card">
-                    <p className="pitch-dossier-kicker">{marker.isNext ? 'Next action' : 'On-ball actor'}</p>
+                    <p className="pitch-dossier-kicker">{marker.isPartner ? 'Receiving player' : 'On-ball actor'}</p>
                     <p className="pitch-dossier-name">{marker.name}</p>
                     <p className="pitch-dossier-meta">{marker.team} · #{shirtNumber(marker.playerId)}</p>
                     {detail ? <p className="pitch-dossier-stats">{detail.actions} actions · {detail.totalVaep >= 0 ? '+' : ''}{detail.totalVaep.toFixed(3)} VAEP</p> : null}
