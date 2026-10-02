@@ -13,22 +13,17 @@ type Marker = {
 
 function uniqueMarkers(actions: Action[], selected?: Action): Marker[] {
   const latest = new Map<number, Marker>();
-  for (const action of actions) {
+  // In an action frame the pitch is a close-up of the selected action, not a
+  // full starting XI. Keep only the actor for that action; the arrow and end
+  // point already communicate the ball's destination.
+  const scopedActions = selected ? [selected] : actions;
+  for (const action of scopedActions) {
     latest.set(action.playerId, {
       playerId: action.playerId,
       name: action.playerName,
       team: action.team,
       x: action.startX,
       y: PITCH_HEIGHT - action.startY,
-    });
-  }
-  if (selected) {
-    latest.set(selected.playerId, {
-      playerId: selected.playerId,
-      name: selected.playerName,
-      team: selected.team,
-      x: selected.startX,
-      y: PITCH_HEIGHT - selected.startY,
     });
   }
   return [...latest.values()];
