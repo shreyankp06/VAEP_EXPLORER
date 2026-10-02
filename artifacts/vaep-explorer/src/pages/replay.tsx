@@ -3,7 +3,7 @@ import { ChevronLeft, ChevronRight, Pause, Play, RotateCcw } from 'lucide-react'
 import type { Action, Match } from '@workspace/api-client-react';
 
 import { CatalogSelect, CardGlyph, EngravedFootball, GoalGlyph, PaperPanel, SectionHeading, ShotGlyph, SubGlyph, VaepGlyph } from '@/components/archive/Ornaments';
-import { EngravedPitch, MiniPitch } from '@/components/pitch/EngravedPitch';
+import { EngravedPitch, MiniPitch, type PlayerPitchDetail } from '@/components/pitch/EngravedPitch';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Slider } from '@/components/ui/slider';
@@ -93,6 +93,23 @@ function MatchHero({ match, matches, matchId, onMatchChange }: {
 
 function ActionInspector({ action }: { action: Action }) {
   const probs = deriveProbabilities(action);
+  const [animatedVaep, setAnimatedVaep] = useState(0);
+
+  useEffect(() => {
+    let frame = 0;
+    const started = performance.now();
+    const duration = 720;
+    const target = action.vaepValue;
+    const animate = (now: number) => {
+      const progress = Math.min((now - started) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setAnimatedVaep(target * eased);
+      if (progress < 1) frame = requestAnimationFrame(animate);
+    };
+    frame = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(frame);
+  }, [action.actionId, action.vaepValue]);
+
   return (
     <div className="flex h-full flex-col">
       <p className="label-meta">Valued action</p>
@@ -101,7 +118,7 @@ function ActionInspector({ action }: { action: Action }) {
         {action.playerName} → {titleCase(action.result)} · {formatTime(action.timeSeconds)} · Period {action.periodId}
       </p>
       <p className="font-display mt-6 text-6xl font-semibold leading-none tracking-tight text-primary">
-        {formatSignedVaep(action.vaepValue)}
+        {formatSignedVaep(animatedVaep)}
       </p>
       <p className="label-meta mt-2">VAEP value</p>
       <dl className="mt-6 space-y-4 border-t border-primary/20 pt-4">
@@ -161,6 +178,14 @@ export default function ReplayPage() {
     [actions],
   );
   const players = useMemo(() => aggregatePlayers(actions), [actions]);
+  const playerDetails = useMemo<Record<number, PlayerPitchDetail>>(
+    () => Object.fromEntries(players.map((player) => [player.playerId, {
+      actions: player.actions,
+      totalVaep: player.totalVaep,
+      vaepPer90: player.vaepPer90,
+    }])),
+    [players],
+  );
   const sequences = useMemo(() => buildSequences(actions), [actions]);
   const playerNames = useMemo(() => [...new Set(actions.map((item) => item.playerName))].sort(), [actions]);
   const teams = useMemo(() => [...new Set(actions.map((item) => item.team))].sort(), [actions]);
@@ -263,6 +288,7 @@ export default function ReplayPage() {
                   hoveredPlayerId={hoveredPlayerId}
                   onHoverPlayer={setHoveredPlayerId}
                   onSelectAction={selectActionId}
+                  playerDetails={playerDetails}
                   selected={action}
                 />
                 <div className="mt-4 border border-primary/20 p-4">
@@ -464,6 +490,7 @@ export default function ReplayPage() {
                     <EngravedPitch
                       actions={sequence.actions}
                       onSelectAction={selectActionId}
+                      playerDetails={playerDetails}
                       selected={sequence.actions[sequence.peakIndex]}
                     />
                     <ol className="mt-5 space-y-0 border-l border-primary/30 pl-5">

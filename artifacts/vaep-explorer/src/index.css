@@ -379,6 +379,82 @@
     animation: draw-path 0.7s ease forwards;
   }
 
+  .pitch-ball {
+    animation: ball-pulse 850ms ease-out forwards;
+  }
+
+  .pitch-pulse {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: pitch-pulse 1.3s ease-out infinite;
+  }
+
+  .pitch-marker-halo {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: pitch-pulse 1.2s ease-out infinite;
+  }
+
+  .pitch-player-next {
+    animation: next-arrival 450ms ease-out both;
+  }
+
+  .pitch-dossier {
+    overflow: visible;
+    pointer-events: none;
+  }
+
+  .pitch-dossier-card {
+    border: 1px solid hsl(var(--primary) / 0.45);
+    background: hsl(42 42% 95% / 0.96);
+    box-shadow: 3px 3px 0 hsl(var(--primary) / 0.08);
+    color: hsl(var(--foreground));
+    padding: 5px 7px;
+    line-height: 1.1;
+  }
+
+  .pitch-dossier-kicker,
+  .pitch-dossier-meta,
+  .pitch-dossier-stats {
+    font-family: var(--app-font-sans), sans-serif;
+    font-size: 6px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .pitch-dossier-kicker { color: hsl(var(--secondary)); }
+  .pitch-dossier-name { margin: 2px 0; font-family: var(--app-font-serif), serif; font-size: 13px; font-weight: 600; }
+  .pitch-dossier-meta,
+  .pitch-dossier-stats { color: hsl(var(--muted-foreground)); letter-spacing: 0.04em; text-transform: none; }
+
+  @keyframes ball-pulse {
+    0% { opacity: 0; transform: scale(0.5); }
+    16% { opacity: 1; }
+    80% { opacity: 1; }
+    100% { opacity: 0.1; transform: scale(1); }
+  }
+
+  @keyframes pitch-pulse {
+    0% { opacity: 0.8; transform: scale(0.72); }
+    70% { opacity: 0; transform: scale(1.45); }
+    100% { opacity: 0; transform: scale(1.45); }
+  }
+
+  @keyframes next-arrival {
+    from { opacity: 0; transform: scale(0.72); }
+    to { opacity: 1; transform: scale(1); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .draw-path,
+    .pitch-ball,
+    .pitch-pulse,
+    .pitch-marker-halo,
+    .pitch-player-next {
+      animation: none;
+    }
+  }
+
   .match-hero {
     background-image:
       linear-gradient(120deg, hsl(var(--card) / 0.98), hsl(var(--card) / 0.8)),
