@@ -13,10 +13,13 @@ type Marker = {
 
 function uniqueMarkers(actions: Action[], selected?: Action): Marker[] {
   const latest = new Map<number, Marker>();
-  // In an action frame the pitch is a close-up of the selected action, not a
-  // full starting XI. Keep only the actor for that action; the arrow and end
-  // point already communicate the ball's destination.
-  const scopedActions = selected ? [selected] : actions;
+  // In an action frame the pitch is a close-up of the selected action and its
+  // immediate continuation, not a full starting XI. Showing the next actor
+  // gives the viewer a useful read of where the sequence is going next.
+  const nextAction = selected
+    ? actions.find((action) => action.timeSeconds > selected.timeSeconds || (action.timeSeconds === selected.timeSeconds && action.id > selected.id))
+    : undefined;
+  const scopedActions = selected ? [selected, ...(nextAction ? [nextAction] : [])] : actions;
   for (const action of scopedActions) {
     latest.set(action.playerId, {
       playerId: action.playerId,
