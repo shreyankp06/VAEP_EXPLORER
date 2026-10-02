@@ -380,7 +380,7 @@
   }
 
   .pitch-ball {
-    animation: ball-pulse 850ms ease-out forwards;
+    filter: drop-shadow(0 0 0.8px hsl(var(--primary) / 0.65));
   }
 
   .pitch-pulse {
@@ -400,8 +400,20 @@
   }
 
   .pitch-dossier {
-    overflow: visible;
+    position: absolute;
+    z-index: 5;
+    width: 118px;
+    overflow: hidden;
     pointer-events: none;
+    transform: translateY(-50%);
+  }
+
+  .pitch-dossier-right {
+    margin-left: 10px;
+  }
+
+  .pitch-dossier-left {
+    margin-left: -128px;
   }
 
   .pitch-dossier-card {
@@ -409,7 +421,7 @@
     background: hsl(42 42% 95% / 0.96);
     box-shadow: 3px 3px 0 hsl(var(--primary) / 0.08);
     color: hsl(var(--foreground));
-    padding: 3px 5px;
+    padding: 5px 7px;
     line-height: 1.1;
   }
 
@@ -417,22 +429,15 @@
   .pitch-dossier-meta,
   .pitch-dossier-stats {
     font-family: var(--app-font-sans), sans-serif;
-    font-size: 4.5px;
+    font-size: 9px;
     letter-spacing: 0.1em;
     text-transform: uppercase;
   }
 
   .pitch-dossier-kicker { color: hsl(var(--secondary)); }
-  .pitch-dossier-name { margin: 1px 0; font-family: var(--app-font-serif), serif; font-size: 9px; font-weight: 600; }
+  .pitch-dossier-name { margin: 2px 0; font-family: var(--app-font-serif), serif; font-size: 13px; font-weight: 600; line-height: 1.05; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .pitch-dossier-meta,
   .pitch-dossier-stats { color: hsl(var(--muted-foreground)); letter-spacing: 0.04em; text-transform: none; }
-
-  @keyframes ball-pulse {
-    0% { opacity: 0; transform: scale(0.5); }
-    16% { opacity: 1; }
-    80% { opacity: 1; }
-    100% { opacity: 0.1; transform: scale(1); }
-  }
 
   @keyframes pitch-pulse {
     0% { opacity: 0.8; transform: scale(0.72); }
@@ -447,7 +452,6 @@
 
   @media (prefers-reduced-motion: reduce) {
     .draw-path,
-    .pitch-ball,
     .pitch-pulse,
     .pitch-marker-halo,
     .pitch-player-partner {

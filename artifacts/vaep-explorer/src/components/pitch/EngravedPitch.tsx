@@ -20,14 +20,20 @@ export type PlayerPitchDetail = {
 
 function uniqueMarkers(actions: Action[], selected?: Action): Marker[] {
   const latest = new Map<number, Marker>();
-  // In an action frame the pitch is a close-up of the selected action and its
-  // immediate continuation, not a full starting XI. Showing the next actor
-  // gives the viewer a useful read of where the sequence is going next.
+  // Only actions that can involve a second player get a partner marker. The
+  // best receiver candidate is the same-team action nearest to the pass end
+  // point shortly afterwards—not simply the next event in the feed.
   const partnerAction = selected && isTwoPlayerAction(selected)
-    ? actions.find((action) => {
-      const isAfter = action.timeSeconds > selected.timeSeconds || (action.timeSeconds === selected.timeSeconds && action.id > selected.id);
-      return isAfter && action.team === selected.team && action.timeSeconds - selected.timeSeconds <= 8;
-    })
+    ? actions
+      .filter((action) => {
+        const isAfter = action.timeSeconds > selected.timeSeconds || (action.timeSeconds === selected.timeSeconds && action.id > selected.id);
+        return isAfter && action.team === selected.team && action.timeSeconds - selected.timeSeconds <= 8;
+      })
+      .sort((left, right) => {
+        const leftDistance = Math.hypot(left.startX - selected.endX, left.startY - selected.endY);
+        const rightDistance = Math.hypot(right.startX - selected.endX, right.startY - selected.endY);
+        return leftDistance - rightDistance || left.timeSeconds - right.timeSeconds;
+      })[0]
     : undefined;
   // Put the next action first so the selected actor remains anchored to the
   // current frame when both actions belong to the same player.
@@ -104,6 +110,8 @@ export function EngravedPitch({
   const startY = selected ? PITCH_HEIGHT - selected.startY : 0;
   const endY = selected ? PITCH_HEIGHT - selected.endY : 0;
   const dim = hoveredPlayerId != null;
+  const hoveredMarker = markers.find((marker) => marker.playerId === hoveredPlayerId);
+  const hoveredDetail = hoveredMarker ? playerDetails?.[hoveredMarker.playerId] : undefined;
 
   return (
     <div className="relative overflow-hidden border border-primary/30 bg-[hsl(42_40%_96%)] text-primary">
@@ -139,11 +147,11 @@ export function EngravedPitch({
             />
             <circle className="pitch-pulse" cx={selected.startX} cy={startY} fill="none" r="3.2" stroke="currentColor" strokeWidth="0.35" />
             <circle cx={selected.startX} cy={startY} fill="hsl(42 42% 95%)" r="1.7" stroke="currentColor" strokeWidth="0.7" />
-            <g className="pitch-ball" transform={`translate(${selected.startX} ${startY})`}>
+            <g className="pitch-ball">
               <circle cx="0" cy="0" fill="hsl(42 42% 95%)" r="1.45" stroke="currentColor" strokeWidth="0.35" />
               <path d="M-0.5 -0.65 L0.35 -0.45 L0.62 0.25 L0 0.72 L-0.65 0.3 L-0.5 -0.65Z" fill="none" stroke="currentColor" strokeWidth="0.18" />
               <path d="M-0.5 -0.65 L-1.05 -0.25 M0.35 -0.45 L0.95 -0.72 M0.62 0.25 L1.05 0.58 M0 0.72 L-0.2 1.2 M-0.65 0.3 L-1.12 0.65" fill="none" stroke="currentColor" strokeWidth="0.16" />
-              <animateMotion dur="850ms" fill="freeze" path={`M 0 0 L ${selected.endX - selected.startX} ${endY - startY}`} />
+              <animateTransform attributeName="transform" dur="850ms" fill="freeze" from={`translate(${selected.startX} ${startY})`} to={`translate(${selected.endX} ${endY})`} type="translate" />
             </g>
             <circle cx={selected.endX} cy={endY} fill="currentColor" r="1.4" />
           </g>
@@ -151,7 +159,6 @@ export function EngravedPitch({
         {markers.map((marker) => {
           const active = selected?.playerId === marker.playerId || hoveredPlayerId === marker.playerId;
           const faded = dim && hoveredPlayerId !== marker.playerId && selected?.playerId !== marker.playerId;
-          const detail = playerDetails?.[marker.playerId];
           return (
             <g
               key={marker.playerId}
@@ -201,20 +208,21 @@ export function EngravedPitch({
                   RECEIVER
                 </text>
               ) : null}
-              {hoveredPlayerId === marker.playerId ? (
-                <foreignObject className="pitch-dossier" height="27" width="42" x={marker.x < PITCH_WIDTH / 2 ? marker.x + 4 : marker.x - 46} y={marker.y < PITCH_HEIGHT / 2 ? marker.y + 3 : marker.y - 30}>
-                  <div className="pitch-dossier-card">
-                    <p className="pitch-dossier-kicker">{marker.isPartner ? 'Receiving player' : 'On-ball actor'}</p>
-                    <p className="pitch-dossier-name">{marker.name}</p>
-                    <p className="pitch-dossier-meta">{marker.team} · #{shirtNumber(marker.playerId)}</p>
-                    {detail ? <p className="pitch-dossier-stats">{detail.actions} actions · {detail.totalVaep >= 0 ? '+' : ''}{detail.totalVaep.toFixed(3)} VAEP</p> : null}
-                  </div>
-                </foreignObject>
-              ) : null}
             </g>
           );
         })}
       </svg>
+      {hoveredMarker ? (
+        <div
+          className={cn('pitch-dossier', hoveredMarker.x >= PITCH_WIDTH / 2 ? 'pitch-dossier-left' : 'pitch-dossier-right')}
+          style={{ left: `${(hoveredMarker.x / PITCH_WIDTH) * 100}%`, top: `${(hoveredMarker.y / PITCH_HEIGHT) * 100}%` }}
+        >
+          <p className="pitch-dossier-kicker">{hoveredMarker.isPartner ? 'Receiving player' : 'On-ball actor'}</p>
+          <p className="pitch-dossier-name">{hoveredMarker.name}</p>
+          <p className="pitch-dossier-meta">{hoveredMarker.team} · #{shirtNumber(hoveredMarker.playerId)}</p>
+          {hoveredDetail ? <p className="pitch-dossier-stats">{hoveredDetail.actions} actions · {hoveredDetail.totalVaep >= 0 ? '+' : ''}{hoveredDetail.totalVaep.toFixed(3)} VAEP</p> : null}
+        </div>
+      ) : null}
     </div>
   );
 }
