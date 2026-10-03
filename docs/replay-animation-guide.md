@@ -30,7 +30,7 @@ This is the visual vocabulary for the tactical replay. The rule is that every ef
 | Animation | Trigger | Purpose |
 | --- | --- | --- |
 | Path draw-on | Every selected action | Makes the action read as a live tactical sketch |
-| Ink fade | After the path is drawn | Keeps the pitch legible and gives the next action room |
+| Ink fade | Within two seconds of an action beginning | Fully clears the previous trajectory so the pitch stays legible for the next action |
 | Ball travel and spin | Every trajectory | A visible football starts at the actor, follows the same curved path as the arrow, rotates in flight, and settles at the destination |
 | Ball easing | Every trajectory | Starts decisively after the kick and settles into the receiver |
 | Kicking cue | Passes, crosses, shots, and clearances | Brief directional mark shows the passer initiating the action |
@@ -53,6 +53,7 @@ This is the visual vocabulary for the tactical replay. The rule is that every ef
 - Arrowheads are rendered at 60% opacity, a 40% fade, while the underlying trajectory keeps its own ink fade.
 - The football position is calculated from the same Bézier start point, control point, and end point used to draw the arrow, so its launch point, curve, and destination cannot diverge from the arrow's.
 - The football is rendered after player markers in the SVG paint order, so it remains visually on top of the pitch symbols throughout the action.
+- The pitch SVG remounts for each action, clearing any browser-retained SVG animation state; only the current action's players, trajectory, and football may remain visible.
 - Shots use a heavier, faster-looking stroke and a tighter focus.
 - Clearances use a strong but muted long trajectory.
 - Goals add the `GOAL` stamp and the strongest emphasis.

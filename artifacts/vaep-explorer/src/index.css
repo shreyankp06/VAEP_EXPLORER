@@ -488,7 +488,7 @@
 
   @keyframes ink-fade {
     from { opacity: 0.82; }
-    to { opacity: 0.22; }
+    to { opacity: 0; }
   }
 
   @keyframes receiver-arrival {
@@ -526,7 +526,7 @@
     stroke-dashoffset: 1;
     opacity: 0.82;
     stroke-linecap: round;
-    animation: draw-path 0.7s ease forwards, ink-fade 1.6s 0.65s ease-out forwards;
+    animation: draw-path 0.7s ease forwards, ink-fade 2s ease-out forwards;
   }
 
   .trajectory-long {

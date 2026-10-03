@@ -233,6 +233,7 @@ export function EngravedPitch({
       <svg
         aria-label={selected ? `Pitch diagram for ${selected.playerName}'s ${selected.actionType}` : 'Engraved tactical pitch'}
         className="h-auto w-full"
+        key={selected?.actionId ?? 'empty-pitch'}
         viewBox={activeViewBox}
       >
         <defs>
