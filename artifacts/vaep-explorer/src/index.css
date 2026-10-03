@@ -114,10 +114,10 @@
   --chart-4: 232 32% 74%;
   --chart-5: 232 70% 30%;
 
-  --app-font-sans: 'Source Sans 3', 'Segoe UI', sans-serif;
-  --app-font-serif: 'Cormorant Garamond', 'Times New Roman', serif;
-  --app-font-body: 'Source Serif 4', Georgia, serif;
-  --app-font-mono: 'Source Sans 3', Menlo, monospace;
+  --app-font-sans: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --app-font-serif: 'Palatino Linotype', Palatino, Georgia, serif;
+  --app-font-body: 'Palatino Linotype', Palatino, Georgia, serif;
+  --app-font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   --radius: 0.15rem;
 
   --shadow-2xs: 0px 2px 0px 0px hsl(0 0% 0% / 0.05);
