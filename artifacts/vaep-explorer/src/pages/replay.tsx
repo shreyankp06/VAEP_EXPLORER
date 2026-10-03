@@ -10,7 +10,7 @@ import { Slider } from '@/components/ui/slider';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useGetMatchActions, useListMatches } from '@/hooks/api/useMatches';
 import { formatPercent, formatSignedVaep, formatTime, titleCase } from '@/lib/format';
-import { matchCompetition, matchDate, matchSeason, matchStatus, matchVenue } from '@/lib/matchMeta';
+import { matchCompetition, matchSeason } from '@/lib/matchMeta';
 import { cn } from '@/lib/utils';
 import { aggregatePlayers, buildSequences, deriveProbabilities, pitchZone } from '@/lib/vaep';
 
@@ -56,9 +56,6 @@ function MatchHero({ match, matches, matchId, onMatchChange }: {
                   {match.awayTeam}
                 </h1>
               </div>
-              <p className="mt-5 text-center text-sm text-muted-foreground">
-                {matchVenue(match)} · {matchDate(match)} · {matchStatus(match)}
-              </p>
             </>
           ) : (
             <h1 className="font-display mt-4 text-4xl text-primary">No fixture selected</h1>
