@@ -850,7 +850,8 @@
 
   .replay-legend-line-shot {
     height: 3px;
-    box-shadow: 7px 0 0 -1px currentColor, 14px 0 0 -1px currentColor;
+    background: currentColor;
+    box-shadow: none;
   }
 
   .replay-legend-ball {
