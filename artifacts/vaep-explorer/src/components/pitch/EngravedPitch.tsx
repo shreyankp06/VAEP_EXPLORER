@@ -218,7 +218,7 @@ export function EngravedPitch({
       </svg>
       {activeMarker ? (
         <div
-          className={cn('pitch-dossier', activeMarker.x >= PITCH_WIDTH / 2 ? 'pitch-dossier-left' : 'pitch-dossier-right', pinnedPlayerId === activeMarker.playerId && 'pitch-dossier-pinned')}
+          className={cn('pitch-dossier', activeMarker.x >= PITCH_WIDTH * 0.62 ? 'pitch-dossier-left' : 'pitch-dossier-right', pinnedPlayerId === activeMarker.playerId && 'pitch-dossier-pinned')}
           style={{ left: `${(activeMarker.x / PITCH_WIDTH) * 100}%`, top: `${(activeMarker.y / PITCH_HEIGHT) * 100}%` }}
         >
           <div className="pitch-dossier-card">
