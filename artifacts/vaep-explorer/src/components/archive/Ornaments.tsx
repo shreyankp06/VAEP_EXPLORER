@@ -82,7 +82,7 @@ export function SectionHeading({
   aside?: string;
 }) {
   return (
-    <header className="mb-5 flex flex-wrap items-end justify-between gap-3 border-b border-primary/25 pb-3">
+    <header className="section-heading mb-5 flex flex-wrap items-end justify-between gap-3 border-b border-primary/25 pb-3">
       <div>
         <p className="label-meta">{kicker}</p>
         <h2 className="font-display mt-1 text-3xl font-semibold tracking-tight text-primary md:text-4xl">{title}</h2>
@@ -100,7 +100,7 @@ export function PaperPanel({
   className?: string;
 }) {
   return (
-    <section className={cn('relative border border-primary/25 bg-card/80 p-5 md:p-6', className)}>
+    <section className={cn('archive-panel relative border border-primary/25 bg-card/80 p-5 md:p-6', className)}>
       <FolioCorner className="pointer-events-none absolute left-1 top-1 h-10 w-10" />
       {children}
     </section>

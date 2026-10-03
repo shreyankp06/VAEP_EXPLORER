@@ -257,7 +257,7 @@ export default function ReplayPage() {
     <div className="space-y-8">
       <MatchHero match={selectedMatch} matchId={matchId} matches={matches.data ?? []} onMatchChange={setMatchId} />
 
-      <nav aria-label="Match sections" className="flex gap-1 overflow-x-auto border-y border-primary/25 py-2">
+      <nav aria-label="Match sections" className="blueprint-band flex gap-1 overflow-x-auto border-y border-primary/25 py-2">
         {SECTIONS.map((item) => (
           <button
             key={item}
