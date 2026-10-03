@@ -133,8 +133,8 @@ function AnimatedFootball({ actionId, trajectory }: { actionId: number; trajecto
   return (
     <g className="pitch-ball" pointerEvents="none" transform={`translate(${x.toFixed(2)} ${y.toFixed(2)}) rotate(${angle.toFixed(2)})`}>
       <circle cx="0" cy="0" fill="hsl(var(--background))" r="2.15" stroke="currentColor" strokeWidth="0.58" />
-      <path d="M-0.62 -0.82 L0.44 -0.58 L0.76 0.32 L0 0.94 L-0.82 0.38 L-0.62 -0.82Z" fill="currentColor" stroke="currentColor" strokeWidth="0.16" />
-      <path d="M-0.62 -0.82 L-1.48 -0.36 M0.44 -0.58 L1.4 -0.9 M0.76 0.32 L1.48 0.82 M0 0.94 L-0.28 1.7 M-0.82 0.38 L-1.5 0.92" fill="none" stroke="currentColor" strokeLinecap="round" strokeWidth="0.22" />
+      <path d="M0 -0.86 L0.82 -0.26 L0.5 0.7 L-0.5 0.7 L-0.82 -0.26 Z" fill="currentColor" stroke="currentColor" strokeLinejoin="round" strokeWidth="0.16" />
+      <path d="M0 -0.86 L0 -1.88 M0.82 -0.26 L1.88 -0.6 M0.5 0.7 L1.1 1.58 M-0.5 0.7 L-1.1 1.58 M-0.82 -0.26 L-1.88 -0.6" fill="none" stroke="currentColor" strokeLinecap="round" strokeWidth="0.24" />
     </g>
   );
 }

@@ -19,7 +19,7 @@ This is the visual vocabulary for the tactical replay. The rule is that every ef
 | Fine dotted path | Carry, dribble, or player-led movement; no pass is implied |
 | Heavy fast path | Shot or clearance |
 | Arrowhead | Direction of ball movement |
-| Football glyph | Ball in motion along the displayed trajectory |
+| Football glyph | Ball in motion along the displayed trajectory: an outlined circle, filled centre pentagon, and five seams extending from pentagon corners to the outer edge |
 | `RECEIVER` label | The second player inferred for a two-player action |
 | `+0.000 VAEP` callout | A high-value action's contribution to scoring/conceding probability |
 | `SHOT` stamp | A shot action that is not recorded as a goal |
