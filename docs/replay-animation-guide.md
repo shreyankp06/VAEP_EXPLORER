@@ -7,6 +7,9 @@ This is the visual vocabulary for the tactical replay. The rule is that every ef
 | Visual | Meaning |
 | --- | --- |
 | Solid player circle | Player involved in the current action |
+| Deep cobalt player circle | First team in the match action feed; primary team tone |
+| Lighter cobalt player circle with dashed outline | Second team in the match action feed; secondary team tone |
+| Team key below the pitch | Maps the two blue tones to the team names |
 | Ring around a player | Active, hovered, or selected player |
 | Expanding receiver ring | The next receiving player is anticipating the ball |
 | Dashed blue ink path | Ball trajectory for a pass or other movement |
@@ -34,7 +37,7 @@ This is the visual vocabulary for the tactical replay. The rule is that every ef
 | Freeze dwell | Large absolute VAEP, shot, goal, or interruption | Holds the current replay frame longer before advancing |
 | Shot treatment | Shot actions | Stronger stroke, glow, and tighter attacking focus |
 | Goal treatment | Goal results | Strongest border pulse, goal stamp, and attacking focus |
-| Tactical camera focus | Shots, goals, and advanced attacking actions | Gently narrows attention toward the attacking end |
+| Tactical camera focus | Shots and goals only | Gently narrows attention toward the attacking end without interrupting ordinary passes |
 | Intensity meter | Current replay action | Communicates the rhythm of the match from quiet possession to danger |
 
 ## Action treatment rules
@@ -49,6 +52,8 @@ This is the visual vocabulary for the tactical replay. The rule is that every ef
 - Goals add the `GOAL` stamp and the strongest emphasis.
 - Negative or low-value actions remain quiet; value should guide emphasis, not replace the match narrative.
 - Goals, shots, fouls, restarts, and offside events receive a short dwell so the match reads as chapters rather than a continuous jump-cut.
+- Team identity is deliberately encoded with tone and outline rather than unrelated colors: deep cobalt for the first team and lighter cobalt with a dashed outline for the second.
+- Camera focus interpolates over 420ms and only engages for shots and goals; normal attacking passes remain full-pitch.
 
 ## Accessibility and interaction
 

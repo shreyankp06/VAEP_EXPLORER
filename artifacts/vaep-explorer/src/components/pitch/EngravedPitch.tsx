@@ -95,6 +95,11 @@ function cameraBox(action?: Action, trajectory?: ReturnType<typeof trajectoryFor
   return `${x.toFixed(2)} ${y.toFixed(2)} ${width} ${height}`;
 }
 
+function teamTone(team: string, actions: Action[]) {
+  const teams = [...new Set(actions.map((action) => action.team))];
+  return teams.indexOf(team) === 1 ? 'away' : 'home';
+}
+
 function parseViewBox(viewBox: string) {
   return viewBox.split(' ').map(Number);
 }
@@ -154,6 +159,7 @@ export function EngravedPitch({
   const [pinnedPlayerId, setPinnedPlayerId] = useState<number | null>(null);
   const [freezeFrame, setFreezeFrame] = useState(false);
   const markers = uniqueMarkers(actions, selected);
+  const teams = [...new Set(actions.map((action) => action.team))].slice(0, 2);
   const startY = selected ? PITCH_HEIGHT - selected.startY : 0;
   const endY = selected ? PITCH_HEIGHT - selected.endY : 0;
   const dim = hoveredPlayerId != null;
@@ -268,7 +274,7 @@ export function EngravedPitch({
             <g
               key={marker.playerId}
               aria-label={`${marker.name}${marker.isPartner ? ', receiving player' : ''}`}
-              className={cn('pitch-player cursor-pointer', marker.isPartner && 'pitch-player-partner pitch-player-anticipating', selected?.playerId === marker.playerId && 'pitch-player-actor')}
+              className={cn('pitch-player cursor-pointer', `pitch-team-${teamTone(marker.team, actions)}`, marker.isPartner && 'pitch-player-partner pitch-player-anticipating', selected?.playerId === marker.playerId && 'pitch-player-actor')}
               onClick={() => {
                 setPinnedPlayerId((current) => current === marker.playerId ? null : marker.playerId);
                 const related = [...actions].reverse().find((action) => action.playerId === marker.playerId);
@@ -282,10 +288,11 @@ export function EngravedPitch({
               <circle
                 cx={marker.x}
                 cy={marker.y}
-                fill={teamInk(marker.team)}
+                fill={teamTone(marker.team, actions) === 'away' ? '#6374d8' : teamInk(marker.team)}
                 r={active ? 3.15 : 2.7}
                 stroke="hsl(var(--background))"
                 strokeWidth="0.45"
+                strokeDasharray={teamTone(marker.team, actions) === 'away' ? '0.8 0.45' : undefined}
               />
               <text
                 fill="hsl(var(--primary-foreground))"
@@ -328,6 +335,16 @@ export function EngravedPitch({
           );
         })}
       </svg>
+      {teams.length === 2 ? (
+        <div aria-label="Team key" className="pitch-team-key">
+          {teams.map((team, index) => (
+            <span className="pitch-team-key-item" key={team}>
+              <span className={cn('pitch-team-swatch', index === 1 && 'pitch-team-swatch-away')} />
+              {team}
+            </span>
+          ))}
+        </div>
+      ) : null}
       {activeMarker ? (
         <div
           className={cn('pitch-dossier', activeMarker.x >= PITCH_WIDTH * 0.62 ? 'pitch-dossier-left' : 'pitch-dossier-right', pinnedPlayerId === activeMarker.playerId && 'pitch-dossier-pinned')}
