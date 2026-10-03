@@ -59,6 +59,28 @@ function isTwoPlayerAction(action: Action) {
   return ['pass', 'through ball', 'cross', 'assist', 'corner', 'free kick', 'throw in'].some((name) => type.includes(name));
 }
 
+function trajectoryFor(action: Action) {
+  const startX = action.startX;
+  const startY = PITCH_HEIGHT - action.startY;
+  const endX = action.endX;
+  const endY = PITCH_HEIGHT - action.endY;
+  const dx = endX - startX;
+  const dy = endY - startY;
+  const distance = Math.hypot(dx, dy);
+  const type = action.actionType.toLowerCase().replace(/[-_]/g, ' ');
+  const isCross = type.includes('cross') || type.includes('corner');
+  const isThroughBall = type.includes('through ball');
+  const isLong = distance > 25 || isCross;
+  const bend = isCross ? 0.24 : isThroughBall ? 0.15 : isLong ? 0.1 : 0.035;
+  const normalX = -dy / (distance || 1);
+  const normalY = dx / (distance || 1);
+  const controlX = (startX + endX) / 2 + normalX * distance * bend;
+  const controlY = (startY + endY) / 2 + normalY * distance * bend;
+  const d = `M ${startX.toFixed(2)} ${startY.toFixed(2)} Q ${controlX.toFixed(2)} ${controlY.toFixed(2)} ${endX.toFixed(2)} ${endY.toFixed(2)}`;
+  const relative = `M 0 0 Q ${(controlX - startX).toFixed(2)} ${(controlY - startY).toFixed(2)} ${dx.toFixed(2)} ${(-action.endY + action.startY).toFixed(2)}`;
+  return { d, relative, isLong, isThroughBall, isCross };
+}
+
 function PitchMarkings() {
   return (
     <g fill="none" stroke="currentColor" strokeWidth="0.42">
@@ -115,6 +137,7 @@ export function EngravedPitch({
   const activePlayerId = pinnedPlayerId ?? hoveredPlayerId;
   const activeMarker = markers.find((marker) => marker.playerId === activePlayerId);
   const activeDetail = activeMarker ? playerDetails?.[activeMarker.playerId] : undefined;
+  const trajectory = selected ? trajectoryFor(selected) : undefined;
 
   return (
     <div className="relative overflow-visible border border-primary/30 bg-background text-primary">
@@ -136,25 +159,29 @@ export function EngravedPitch({
         <PitchMarkings />
         {selected ? (
           <g key={selected.actionId} className="pitch-action-frame">
-            <line
-              className={cn('draw-path', `action-${selected.actionType}`)}
+            <path
+              className={cn(
+                'draw-path',
+                `action-${selected.actionType}`,
+                trajectory?.isLong && 'trajectory-long',
+                trajectory?.isThroughBall && 'trajectory-through-ball',
+                trajectory?.isCross && 'trajectory-cross',
+              )}
               markerEnd="url(#vaep-arrow)"
               pathLength={1}
               stroke="currentColor"
               strokeLinecap="round"
               strokeWidth="0.9"
-              x1={selected.startX}
-              x2={selected.endX}
-              y1={startY}
-              y2={endY}
+              d={trajectory?.d}
+              fill="none"
             />
             <circle className="pitch-pulse" cx={selected.startX} cy={startY} fill="none" r="3.2" stroke="currentColor" strokeWidth="0.35" />
             <circle cx={selected.startX} cy={startY} fill="hsl(var(--background))" r="1.7" stroke="currentColor" strokeWidth="0.7" />
-            <g className="pitch-ball">
+            <g className="pitch-ball" transform={`translate(${selected.startX} ${startY})`}>
               <circle cx="0" cy="0" fill="hsl(var(--background))" r="1.45" stroke="currentColor" strokeWidth="0.35" />
               <path d="M-0.5 -0.65 L0.35 -0.45 L0.62 0.25 L0 0.72 L-0.65 0.3 L-0.5 -0.65Z" fill="none" stroke="currentColor" strokeWidth="0.18" />
               <path d="M-0.5 -0.65 L-1.05 -0.25 M0.35 -0.45 L0.95 -0.72 M0.62 0.25 L1.05 0.58 M0 0.72 L-0.2 1.2 M-0.65 0.3 L-1.12 0.65" fill="none" stroke="currentColor" strokeWidth="0.16" />
-              <animateTransform attributeName="transform" dur="850ms" fill="freeze" from={`translate(${selected.startX} ${startY})`} to={`translate(${selected.endX} ${endY})`} type="translate" />
+              <animateMotion dur="950ms" fill="freeze" path={trajectory?.relative} rotate="auto" />
             </g>
             <circle cx={selected.endX} cy={endY} fill="currentColor" r="1.4" />
           </g>
@@ -176,7 +203,7 @@ export function EngravedPitch({
               onMouseLeave={() => onHoverPlayer?.(null)}
               opacity={faded ? 0.28 : 1}
             >
-              {active ? <circle className="pitch-marker-halo" cx={marker.x} cy={marker.y} fill="none" r="4.2" stroke="currentColor" strokeWidth="0.35" /> : null}
+              {active || marker.isPartner ? <circle className={cn('pitch-marker-halo', marker.isPartner && 'pitch-receiver-ring')} cx={marker.x} cy={marker.y} fill="none" r="4.2" stroke="currentColor" strokeWidth="0.35" /> : null}
               <circle
                 cx={marker.x}
                 cy={marker.y}

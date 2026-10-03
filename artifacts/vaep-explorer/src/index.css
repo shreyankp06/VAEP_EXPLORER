@@ -486,10 +486,35 @@
     to { stroke-dashoffset: 0; }
   }
 
+  @keyframes ink-fade {
+    from { opacity: 0.82; }
+    to { opacity: 0.22; }
+  }
+
+  @keyframes receiver-arrival {
+    0% { opacity: 0.2; transform: scale(0.72); }
+    62% { opacity: 0.7; transform: scale(1.12); }
+    100% { opacity: 0.1; transform: scale(1.35); }
+  }
+
   .draw-path {
-    stroke-dasharray: 1;
+    stroke-dasharray: 0.018 0.012;
     stroke-dashoffset: 1;
-    animation: draw-path 0.7s ease forwards;
+    opacity: 0.82;
+    animation: draw-path 0.7s ease forwards, ink-fade 1.6s 0.65s ease-out forwards;
+  }
+
+  .trajectory-long {
+    stroke-width: 0.72;
+    stroke-dasharray: 0.012 0.016;
+  }
+
+  .trajectory-through-ball {
+    filter: drop-shadow(0 0 1px hsl(var(--primary) / 0.65));
+  }
+
+  .trajectory-cross {
+    stroke-width: 0.68;
   }
 
   .pitch-ball {
@@ -506,6 +531,10 @@
     transform-box: fill-box;
     transform-origin: center;
     animation: pitch-pulse 1.2s ease-out infinite;
+  }
+
+  .pitch-receiver-ring {
+    animation: receiver-arrival 950ms ease-out infinite;
   }
 
   .pitch-player-partner {
@@ -605,7 +634,8 @@
     .draw-path,
     .pitch-pulse,
     .pitch-marker-halo,
-    .pitch-player-partner {
+    .pitch-player-partner,
+    .pitch-receiver-ring {
       animation: none;
     }
 
