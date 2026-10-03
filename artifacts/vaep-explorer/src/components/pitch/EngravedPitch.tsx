@@ -87,12 +87,20 @@ function trajectoryFor(action: Action) {
 }
 
 function cameraBox(action?: Action, trajectory?: ReturnType<typeof trajectoryFor>) {
-  if (!action || !trajectory || (!trajectory.isShot && !trajectory.isGoal && action.endX < 72)) return `0 0 ${PITCH_WIDTH} ${PITCH_HEIGHT}`;
+  if (!action || !trajectory || (!trajectory.isShot && !trajectory.isGoal)) return `0 0 ${PITCH_WIDTH} ${PITCH_HEIGHT}`;
   const width = 82;
   const height = 56;
   const x = Math.min(Math.max(action.endX - width * 0.58, 0), PITCH_WIDTH - width);
   const y = Math.min(Math.max(PITCH_HEIGHT - action.endY - height * 0.5, 0), PITCH_HEIGHT - height);
   return `${x.toFixed(2)} ${y.toFixed(2)} ${width} ${height}`;
+}
+
+function parseViewBox(viewBox: string) {
+  return viewBox.split(' ').map(Number);
+}
+
+function formatViewBox(values: number[]) {
+  return values.map((value) => value.toFixed(2)).join(' ');
 }
 
 function PitchMarkings() {
@@ -154,7 +162,24 @@ export function EngravedPitch({
   const activeDetail = activeMarker ? playerDetails?.[activeMarker.playerId] : undefined;
   const trajectory = selected ? trajectoryFor(selected) : undefined;
   const isHighValue = Boolean(selected && (Math.abs(selected.vaepValue) >= 0.08 || trajectory?.isShot || trajectory?.isGoal));
-  const activeViewBox = cameraBox(selected, trajectory);
+  const targetViewBox = cameraBox(selected, trajectory);
+  const [activeViewBox, setActiveViewBox] = useState(targetViewBox);
+
+  useEffect(() => {
+    const from = parseViewBox(activeViewBox);
+    const to = parseViewBox(targetViewBox);
+    const started = performance.now();
+    const duration = 420;
+    let frame = 0;
+    const animate = (now: number) => {
+      const progress = Math.min((now - started) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setActiveViewBox(formatViewBox(from.map((value, index) => value + (to[index] - value) * eased)));
+      if (progress < 1) frame = requestAnimationFrame(animate);
+    };
+    frame = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(frame);
+  }, [targetViewBox]);
 
   useEffect(() => {
     if (!isHighValue) {
