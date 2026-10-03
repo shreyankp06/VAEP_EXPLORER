@@ -21,11 +21,10 @@ export function EngravedFootball({ className }: { className?: string }) {
 
 export function FolioCorner({ className }: { className?: string }) {
   return (
-    <svg aria-hidden="true" className={cn('text-primary/50', className)} fill="none" viewBox="0 0 72 72">
-      <path d="M8 8 H52 M8 8 V52" stroke="currentColor" strokeWidth="0.8" />
-      <path d="M8 16 H40 M16 8 V40" stroke="currentColor" strokeWidth="0.45" />
-      <path d="M12 28 C18 18 28 14 40 20 C28 24 22 32 24 44 C18 36 12 34 12 28 Z" stroke="currentColor" strokeWidth="0.55" />
-      <path d="M20 20 C26 16 34 18 38 24" stroke="currentColor" strokeWidth="0.4" />
+    <svg aria-hidden="true" className={cn('text-primary/35', className)} fill="none" viewBox="0 0 32 32">
+      <path d="M4 4 H26 M4 4 V26" stroke="currentColor" strokeLinecap="square" strokeWidth="0.7" />
+      <path d="M4 9 H13 M9 4 V13" stroke="currentColor" strokeWidth="0.35" />
+      <circle cx="4" cy="4" fill="currentColor" r="1" stroke="none" />
     </svg>
   );
 }
