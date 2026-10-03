@@ -10,7 +10,7 @@ import { Slider } from '@/components/ui/slider';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useGetMatchActions, useListMatches } from '@/hooks/api/useMatches';
 import { formatPercent, formatSignedVaep, formatTime, titleCase } from '@/lib/format';
-import { matchDate, matchStatus, matchVenue } from '@/lib/matchMeta';
+import { matchCompetition, matchDate, matchSeason, matchStatus, matchVenue } from '@/lib/matchMeta';
 import { cn } from '@/lib/utils';
 import { aggregatePlayers, buildSequences, deriveProbabilities, pitchZone } from '@/lib/vaep';
 
@@ -41,7 +41,7 @@ function MatchHero({ match, matches, matchId, onMatchChange }: {
             <span className="font-sans text-[0.65rem] uppercase tracking-[0.22em] text-secondary">90 minutes catalogued</span>
           </div>
           <p className="mt-2 font-sans text-sm text-muted-foreground">
-            {match ? `${match.competition} · ${match.season}` : 'Select a fixture from the catalogue'}
+            {match ? `${matchCompetition(match)} · ${matchSeason(match)}` : 'Select a fixture from the catalogue'}
           </p>
           {match ? (
             <>
@@ -72,7 +72,7 @@ function MatchHero({ match, matches, matchId, onMatchChange }: {
             >
               {matches.map((item) => (
                 <option key={item.matchId} value={item.matchId}>
-                  {item.homeTeam} {item.homeScore}–{item.awayScore} {item.awayTeam} · {item.competition}
+                  {item.homeTeam} {item.homeScore}–{item.awayScore} {item.awayTeam} · {matchCompetition(item)}
                 </option>
               ))}
             </CatalogSelect>
