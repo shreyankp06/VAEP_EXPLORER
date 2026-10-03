@@ -59,6 +59,37 @@ function IntensityMeter({ action }: { action: Action }) {
   );
 }
 
+function ReplayLegend({ teams }: { teams: string[] }) {
+  const legendItems = [
+    { mark: <span className="replay-legend-marker replay-legend-home" />, label: teams[0] ?? 'Team one' },
+    { mark: <span className="replay-legend-marker replay-legend-away" />, label: teams[1] ?? 'Team two' },
+    { mark: <span className="replay-legend-ring replay-legend-ring-receiver" />, label: 'Next receiver' },
+    { mark: <span className="replay-legend-line replay-legend-line-pass" />, label: 'Pass / cross / through ball' },
+    { mark: <span className="replay-legend-line replay-legend-line-carry" />, label: 'Carry / dribble' },
+    { mark: <span className="replay-legend-line replay-legend-line-shot" />, label: 'Shot / clearance' },
+    { mark: <span className="replay-legend-ball" />, label: 'Football in motion' },
+    { mark: <span className="replay-legend-callout">+VAEP</span>, label: 'High-value action' },
+    { mark: <span className="replay-legend-stamp">RESET</span>, label: 'Foul / restart / interruption' },
+  ];
+
+  return (
+    <section aria-label="Replay legend" className="replay-legend">
+      <div className="flex items-baseline justify-between gap-4">
+        <p className="label-meta">Reading the plate</p>
+        <p className="font-sans text-[0.65rem] text-muted-foreground">Action marks explain what happened</p>
+      </div>
+      <div className="replay-legend-grid">
+        {legendItems.map((item) => (
+          <div className="replay-legend-item" key={item.label}>
+            <span className="replay-legend-mark" aria-hidden="true">{item.mark}</span>
+            <span>{item.label}</span>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 function MatchHero({ match, matches, matchId, onMatchChange }: {
   match?: Match;
   matches: Match[];
@@ -322,6 +353,7 @@ export default function ReplayPage() {
                   playerDetails={playerDetails}
                   selected={action}
                 />
+                <ReplayLegend teams={teams} />
                 <div className="mt-4 border border-primary/20 p-4">
                   <Slider
                     aria-label="Replay progress"

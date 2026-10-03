@@ -800,9 +800,140 @@
     background: hsl(var(--primary) / 0.82);
     transform: translateY(-1px);
   }
+
+  .replay-legend {
+    margin-top: 10px;
+    border: 1px solid hsl(var(--primary) / 0.18);
+    background: hsl(var(--primary) / 0.025);
+    padding: 11px 12px 12px;
+  }
+
+  .replay-legend-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 9px 14px;
+    margin-top: 10px;
+  }
+
+  .replay-legend-item {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 7px;
+    color: hsl(var(--muted-foreground));
+    font-family: var(--app-font-sans), sans-serif;
+    font-size: 10px;
+    line-height: 1.2;
+  }
+
+  .replay-legend-mark {
+    display: inline-flex;
+    width: 24px;
+    flex: 0 0 24px;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .replay-legend-marker {
+    display: block;
+    width: 12px;
+    height: 12px;
+    border-radius: 999px;
+  }
+
+  .replay-legend-home {
+    background: #2238c4;
+    border: 1px solid hsl(var(--background));
+  }
+
+  .replay-legend-away {
+    background: hsl(var(--background));
+    border: 1px dashed #6374d8;
+  }
+
+  .replay-legend-ring {
+    display: block;
+    width: 15px;
+    height: 15px;
+    border: 1px solid hsl(var(--primary) / 0.55);
+    border-radius: 999px;
+  }
+
+  .replay-legend-ring-receiver {
+    border-style: dashed;
+    box-shadow: 0 0 0 3px hsl(var(--primary) / 0.08);
+  }
+
+  .replay-legend-line {
+    display: block;
+    width: 24px;
+    height: 2px;
+    background: currentColor;
+  }
+
+  .replay-legend-line-pass {
+    background: repeating-linear-gradient(90deg, currentColor 0 6px, transparent 6px 11px);
+  }
+
+  .replay-legend-line-carry {
+    height: 3px;
+    background: repeating-linear-gradient(90deg, currentColor 0 1px, transparent 1px 7px);
+  }
+
+  .replay-legend-line-shot {
+    height: 3px;
+    box-shadow: 7px 0 0 -1px currentColor, 14px 0 0 -1px currentColor;
+  }
+
+  .replay-legend-ball {
+    display: block;
+    width: 14px;
+    height: 14px;
+    border: 2px solid currentColor;
+    border-radius: 999px;
+    position: relative;
+  }
+
+  .replay-legend-ball::after {
+    content: '';
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    top: 3px;
+    left: 3px;
+    background: currentColor;
+    clip-path: polygon(50% 0, 100% 35%, 80% 100%, 20% 100%, 0 35%);
+  }
+
+  .replay-legend-callout,
+  .replay-legend-stamp {
+    display: inline-flex;
+    min-width: 24px;
+    height: 16px;
+    align-items: center;
+    justify-content: center;
+    background: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+    font-family: var(--app-font-sans), sans-serif;
+    font-size: 7px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+  }
+
+  .replay-legend-stamp {
+    border: 1px solid hsl(var(--primary) / 0.5);
+    background: transparent;
+    color: hsl(var(--primary));
+    font-size: 6px;
+    letter-spacing: 0.12em;
+  }
 }
 
 @media (max-width: 640px) {
+  .replay-legend-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .pitch-dossier {
     width: 180px;
   }

@@ -70,6 +70,10 @@ This is the visual vocabulary for the tactical replay. The rule is that every ef
 - The pitch only shows players involved in the current action, plus the inferred receiving player for two-player actions.
 - All meaningful controls retain text labels or ARIA labels; animation is never the only source of meaning.
 
+## On-page legend
+
+The interactive pitch is followed by a compact “Reading the plate” legend. It repeats the most important meanings in context: the two team symbols, receiver ring, pass/carry/shot line styles, football marker, high-value VAEP callout, and interruption stamp. This quick legend is intentionally shorter than this document and is the first reference users see while replaying an action.
+
 ## Implementation map
 
 - Pitch rendering and trajectory semantics: `artifacts/vaep-explorer/src/components/pitch/EngravedPitch.tsx`
