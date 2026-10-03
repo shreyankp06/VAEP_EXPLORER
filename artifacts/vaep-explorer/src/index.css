@@ -69,48 +69,50 @@
 
 /* LIGHT MODE */
 :root {
-  --button-outline: rgba(0, 0, 0, 0.1);
-  --badge-outline: rgba(0, 0, 0, 0.05);
+  --blueprint-cobalt: #2238c4;
+  --blueprint-ivory: #f7f4ec;
+  --button-outline: hsl(232 70% 45% / 0.12);
+  --badge-outline: hsl(232 70% 45% / 0.08);
   --opaque-button-border-intensity: -8;
   --elevate-1: rgba(0, 0, 0, 0.03);
   --elevate-2: rgba(0, 0, 0, 0.08);
 
-  --background: 42 38% 92%;
-  --foreground: 220 42% 14%;
-  --card: 42 42% 95%;
-  --card-foreground: 220 42% 14%;
-  --card-border: 220 28% 28% / 0.22;
-  --border: 220 26% 28% / 0.2;
-  --input: 220 26% 28% / 0.22;
-  --ring: 220 48% 24%;
-  --primary: 220 48% 24%;
-  --primary-foreground: 42 40% 94%;
-  --secondary: 28 24% 38%;
-  --secondary-foreground: 42 40% 94%;
-  --muted: 40 28% 88%;
-  --muted-foreground: 220 18% 34%;
-  --accent: 38 32% 86%;
-  --accent-foreground: 220 42% 16%;
-  --destructive: 8 38% 36%;
-  --destructive-foreground: 42 40% 94%;
-  --popover: 42 42% 95%;
-  --popover-foreground: 220 42% 14%;
-  --popover-border: 220 28% 28% / 0.22;
+  --background: 45 38% 95%;
+  --foreground: 232 50% 14%;
+  --card: 45 42% 97%;
+  --card-foreground: 232 50% 14%;
+  --card-border: 232 70% 45% / 0.22;
+  --border: 232 70% 45% / 0.2;
+  --input: 232 70% 45% / 0.22;
+  --ring: 232 70% 45%;
+  --primary: 232 70% 45%;
+  --primary-foreground: 45 38% 95%;
+  --secondary: 232 48% 35%;
+  --secondary-foreground: 45 38% 95%;
+  --muted: 45 28% 90%;
+  --muted-foreground: 232 32% 35%;
+  --accent: 232 38% 91%;
+  --accent-foreground: 232 50% 14%;
+  --destructive: 232 60% 32%;
+  --destructive-foreground: 45 38% 95%;
+  --popover: 45 42% 97%;
+  --popover-foreground: 232 50% 14%;
+  --popover-border: 232 70% 45% / 0.22;
 
-  --sidebar: 220 48% 18%;
-  --sidebar-foreground: 42 35% 90%;
-  --sidebar-border: 220 30% 28%;
-  --sidebar-primary: 42 38% 88%;
-  --sidebar-primary-foreground: 220 48% 18%;
-  --sidebar-accent: 220 40% 24%;
-  --sidebar-accent-foreground: 42 35% 92%;
-  --sidebar-ring: 42 30% 72%;
+  --sidebar: 232 70% 22%;
+  --sidebar-foreground: 45 38% 95%;
+  --sidebar-border: 232 70% 45%;
+  --sidebar-primary: 45 38% 95%;
+  --sidebar-primary-foreground: 232 70% 22%;
+  --sidebar-accent: 232 70% 30%;
+  --sidebar-accent-foreground: 45 38% 95%;
+  --sidebar-ring: 45 38% 85%;
 
-  --chart-1: 220 48% 28%;
-  --chart-2: 28 28% 42%;
-  --chart-3: 220 22% 42%;
-  --chart-4: 35 18% 48%;
-  --chart-5: 8 32% 38%;
+  --chart-1: 232 70% 45%;
+  --chart-2: 232 58% 55%;
+  --chart-3: 232 45% 65%;
+  --chart-4: 232 32% 74%;
+  --chart-5: 232 70% 30%;
 
   --app-font-sans: 'Source Sans 3', 'Segoe UI', sans-serif;
   --app-font-serif: 'Cormorant Garamond', 'Times New Roman', serif;
@@ -147,42 +149,42 @@
 }
 
 .dark {
-  --button-outline: rgba(255, 255, 255, 0.1);
-  --badge-outline: rgba(255, 255, 255, 0.05);
+  --button-outline: hsl(45 38% 95% / 0.12);
+  --badge-outline: hsl(45 38% 95% / 0.08);
   --opaque-button-border-intensity: 9;
   --elevate-1: rgba(255, 255, 255, 0.04);
   --elevate-2: rgba(255, 255, 255, 0.09);
 
-  --background: 220 38% 10%;
-  --foreground: 42 30% 90%;
-  --card: 220 32% 13%;
-  --card-foreground: 42 30% 90%;
-  --card-border: 42 20% 70% / 0.18;
-  --border: 42 20% 70% / 0.16;
-  --input: 42 20% 70% / 0.2;
-  --ring: 42 32% 72%;
-  --primary: 42 32% 78%;
-  --primary-foreground: 220 42% 12%;
-  --secondary: 28 22% 46%;
-  --secondary-foreground: 42 30% 92%;
-  --muted: 220 24% 16%;
-  --muted-foreground: 42 12% 68%;
-  --accent: 220 22% 18%;
-  --accent-foreground: 42 30% 90%;
-  --destructive: 8 32% 52%;
-  --destructive-foreground: 42 30% 94%;
-  --popover: 220 32% 13%;
-  --popover-foreground: 42 30% 90%;
-  --popover-border: 42 20% 70% / 0.18;
+  --background: 232 70% 12%;
+  --foreground: 45 38% 95%;
+  --card: 232 62% 16%;
+  --card-foreground: 45 38% 95%;
+  --card-border: 45 38% 95% / 0.18;
+  --border: 45 38% 95% / 0.16;
+  --input: 45 38% 95% / 0.2;
+  --ring: 45 38% 95%;
+  --primary: 45 38% 95%;
+  --primary-foreground: 232 70% 12%;
+  --secondary: 232 58% 70%;
+  --secondary-foreground: 45 38% 95%;
+  --muted: 232 52% 20%;
+  --muted-foreground: 45 28% 75%;
+  --accent: 232 58% 24%;
+  --accent-foreground: 45 38% 95%;
+  --destructive: 232 58% 70%;
+  --destructive-foreground: 232 70% 12%;
+  --popover: 232 62% 16%;
+  --popover-foreground: 45 38% 95%;
+  --popover-border: 45 38% 95% / 0.18;
 
-  --sidebar: 220 42% 8%;
-  --sidebar-foreground: 42 30% 90%;
-  --sidebar-border: 220 24% 16%;
-  --sidebar-primary: 42 32% 78%;
-  --sidebar-primary-foreground: 220 42% 10%;
-  --sidebar-accent: 220 32% 14%;
-  --sidebar-accent-foreground: 42 30% 90%;
-  --sidebar-ring: 42 32% 72%;
+  --sidebar: 232 70% 9%;
+  --sidebar-foreground: 45 38% 95%;
+  --sidebar-border: 232 58% 24%;
+  --sidebar-primary: 45 38% 95%;
+  --sidebar-primary-foreground: 232 70% 9%;
+  --sidebar-accent: 232 62% 16%;
+  --sidebar-accent-foreground: 45 38% 95%;
+  --sidebar-ring: 45 38% 85%;
 
   --chart-1: 42 32% 72%;
   --chart-2: 28 28% 52%;
@@ -223,10 +225,10 @@
   body {
     font-family: var(--app-font-body), Georgia, serif;
     background-image:
-      radial-gradient(ellipse at 12% 0%, hsl(220 48% 24% / 0.06), transparent 42%),
-      radial-gradient(ellipse at 88% 18%, hsl(28 30% 40% / 0.05), transparent 36%),
-      repeating-linear-gradient(0deg, transparent, transparent 13px, hsl(220 30% 20% / 0.018) 14px),
-      repeating-linear-gradient(90deg, transparent, transparent 17px, hsl(28 20% 30% / 0.012) 18px);
+      radial-gradient(ellipse at 12% 0%, hsl(var(--primary) / 0.07), transparent 42%),
+      radial-gradient(ellipse at 88% 18%, hsl(var(--primary) / 0.045), transparent 36%),
+      repeating-linear-gradient(0deg, transparent, transparent 13px, hsl(var(--primary) / 0.018) 14px),
+      repeating-linear-gradient(90deg, transparent, transparent 17px, hsl(var(--primary) / 0.012) 18px);
     background-attachment: fixed;
   }
 
@@ -418,7 +420,7 @@
 
   .pitch-dossier-card {
     border: 1px solid hsl(var(--primary) / 0.45);
-    background: hsl(42 42% 95% / 0.96);
+    background: hsl(var(--background) / 0.97);
     box-shadow: 3px 3px 0 hsl(var(--primary) / 0.08);
     color: hsl(var(--foreground));
     padding: 5px 7px;

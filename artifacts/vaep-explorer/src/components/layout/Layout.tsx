@@ -14,7 +14,7 @@ export function Layout({ children }: { children: ReactNode }) {
 
   return (
     <div className="min-h-[100dvh] text-foreground">
-      <header className="border-b border-primary/25 bg-[hsl(42_40%_94%/0.86)] backdrop-blur-sm">
+      <header className="border-b border-primary/25 bg-background/90 backdrop-blur-sm">
         <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-5 md:px-8">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <Link href="/" className="group">

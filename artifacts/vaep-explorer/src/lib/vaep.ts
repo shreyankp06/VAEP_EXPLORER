@@ -105,14 +105,14 @@ export function aggregatePlayers(actions: Action[]): PlayerMatchRow[] {
 }
 
 export const TEAM_INK: Record<string, string> = {
-  Barcelona: '#1d3557',
-  'Real Madrid': '#6b4f32',
-  'Manchester City': '#234e70',
-  Liverpool: '#5c2e2a',
-  PSG: '#24324d',
-  'Bayern Munich': '#5a3328',
+  Barcelona: '#2238c4',
+  'Real Madrid': '#4b5ed0',
+  'Manchester City': '#6d7bdc',
+  Liverpool: '#182c8f',
+  PSG: '#3149bd',
+  'Bayern Munich': '#0d1e72',
 };
 
 export function teamInk(team: string) {
-  return TEAM_INK[team] ?? '#1e3354';
+  return TEAM_INK[team] ?? '#2238c4';
 }

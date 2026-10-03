@@ -114,7 +114,7 @@ export function EngravedPitch({
   const hoveredDetail = hoveredMarker ? playerDetails?.[hoveredMarker.playerId] : undefined;
 
   return (
-    <div className="relative overflow-hidden border border-primary/30 bg-[hsl(42_40%_96%)] text-primary">
+    <div className="relative overflow-hidden border border-primary/30 bg-background text-primary">
       <svg
         aria-label={selected ? `Pitch diagram for ${selected.playerName}'s ${selected.actionType}` : 'Engraved tactical pitch'}
         className="h-auto w-full"
@@ -128,7 +128,7 @@ export function EngravedPitch({
             <path d="M0,0 L4,2 L0,4 z" fill="currentColor" />
           </marker>
         </defs>
-        <rect fill="hsl(42 42% 95%)" height={PITCH_HEIGHT} width={PITCH_WIDTH} />
+        <rect fill="hsl(var(--background))" height={PITCH_HEIGHT} width={PITCH_WIDTH} />
         <rect fill="url(#pitch-hatch)" height={PITCH_HEIGHT} opacity="0.18" width={PITCH_WIDTH} />
         <PitchMarkings />
         {selected ? (
@@ -146,9 +146,9 @@ export function EngravedPitch({
               y2={endY}
             />
             <circle className="pitch-pulse" cx={selected.startX} cy={startY} fill="none" r="3.2" stroke="currentColor" strokeWidth="0.35" />
-            <circle cx={selected.startX} cy={startY} fill="hsl(42 42% 95%)" r="1.7" stroke="currentColor" strokeWidth="0.7" />
+            <circle cx={selected.startX} cy={startY} fill="hsl(var(--background))" r="1.7" stroke="currentColor" strokeWidth="0.7" />
             <g className="pitch-ball">
-              <circle cx="0" cy="0" fill="hsl(42 42% 95%)" r="1.45" stroke="currentColor" strokeWidth="0.35" />
+              <circle cx="0" cy="0" fill="hsl(var(--background))" r="1.45" stroke="currentColor" strokeWidth="0.35" />
               <path d="M-0.5 -0.65 L0.35 -0.45 L0.62 0.25 L0 0.72 L-0.65 0.3 L-0.5 -0.65Z" fill="none" stroke="currentColor" strokeWidth="0.18" />
               <path d="M-0.5 -0.65 L-1.05 -0.25 M0.35 -0.45 L0.95 -0.72 M0.62 0.25 L1.05 0.58 M0 0.72 L-0.2 1.2 M-0.65 0.3 L-1.12 0.65" fill="none" stroke="currentColor" strokeWidth="0.16" />
               <animateTransform attributeName="transform" dur="850ms" fill="freeze" from={`translate(${selected.startX} ${startY})`} to={`translate(${selected.endX} ${endY})`} type="translate" />
@@ -178,11 +178,11 @@ export function EngravedPitch({
                 cy={marker.y}
                 fill={teamInk(marker.team)}
                 r={active ? 3.15 : 2.7}
-                stroke="hsl(42 42% 95%)"
+                stroke="hsl(var(--background))"
                 strokeWidth="0.45"
               />
               <text
-                fill="hsl(42 40% 94%)"
+                fill="hsl(var(--primary-foreground))"
                 fontFamily="Source Sans 3, sans-serif"
                 fontSize="2.4"
                 fontWeight="600"
