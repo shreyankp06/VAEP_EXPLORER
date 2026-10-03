@@ -248,10 +248,15 @@ export function EngravedPitch({
               />
             ) : null}
             <g className="pitch-ball" transform={`translate(${selected.startX} ${startY})`}>
-              <circle cx="0" cy="0" fill="hsl(var(--background))" r="1.45" stroke="currentColor" strokeWidth="0.35" />
-              <path d="M-0.5 -0.65 L0.35 -0.45 L0.62 0.25 L0 0.72 L-0.65 0.3 L-0.5 -0.65Z" fill="none" stroke="currentColor" strokeWidth="0.18" />
-              <path d="M-0.5 -0.65 L-1.05 -0.25 M0.35 -0.45 L0.95 -0.72 M0.62 0.25 L1.05 0.58 M0 0.72 L-0.2 1.2 M-0.65 0.3 L-1.12 0.65" fill="none" stroke="currentColor" strokeWidth="0.16" />
-              <animateMotion calcMode="spline" dur="950ms" fill="freeze" keySplines="0.22 1 0.36 1" keyTimes="0;1" path={trajectory?.relative} rotate="auto" />
+              <g className="pitch-ball-motion">
+                <g className="pitch-ball-spin">
+                  <circle cx="0" cy="0" fill="hsl(var(--background))" r="1.7" stroke="currentColor" strokeWidth="0.45" />
+                  <path d="M-0.5 -0.65 L0.35 -0.45 L0.62 0.25 L0 0.72 L-0.65 0.3 L-0.5 -0.65Z" fill="none" stroke="currentColor" strokeWidth="0.2" />
+                  <path d="M-0.5 -0.65 L-1.05 -0.25 M0.35 -0.45 L0.95 -0.72 M0.62 0.25 L1.05 0.58 M0 0.72 L-0.2 1.2 M-0.65 0.3 L-1.12 0.65" fill="none" stroke="currentColor" strokeWidth="0.18" />
+                  <animateTransform attributeName="transform" dur="950ms" fill="freeze" from="rotate(0)" to="rotate(360)" type="rotate" />
+                </g>
+                <animateMotion calcMode="spline" dur="950ms" fill="freeze" keySplines="0.22 1 0.36 1" keyTimes="0;1" path={trajectory?.relative} rotate="auto" />
+              </g>
             </g>
             <circle cx={selected.endX} cy={endY} fill="currentColor" r="1.4" />
             {isHighValue ? (
@@ -293,7 +298,7 @@ export function EngravedPitch({
                 r={active ? 3.15 : 2.7}
                 stroke={tone === 'away' ? '#6374d8' : 'hsl(var(--background))'}
                 strokeWidth={tone === 'away' ? '0.65' : '0.45'}
-                strokeDasharray={tone === 'away' ? '0.8 0.45' : undefined}
+                strokeDasharray={tone === 'away' ? '1.8 1.4' : undefined}
               />
               <text
                 fill={tone === 'away' ? '#6374d8' : 'hsl(var(--primary-foreground))'}

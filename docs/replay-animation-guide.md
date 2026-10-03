@@ -8,7 +8,7 @@ This is the visual vocabulary for the tactical replay. The rule is that every ef
 | --- | --- |
 | Solid player circle | Player involved in the current action |
 | Deep cobalt player circle | First team in the match action feed; primary team tone |
-| Ivory player circle with lighter-cobalt dashed outline and blue number | Second team in the match action feed; inverted symbol treatment |
+| Ivory player circle with sparse lighter-cobalt dashed outline and blue number | Second team in the match action feed; inverted symbol treatment |
 | Team key below the pitch | Maps each team name to its player-symbol treatment |
 | Ring around a player | Active, hovered, or selected player |
 | Expanding receiver ring | The next receiving player is anticipating the ball |
@@ -31,7 +31,7 @@ This is the visual vocabulary for the tactical replay. The rule is that every ef
 | --- | --- | --- |
 | Path draw-on | Every selected action | Makes the action read as a live tactical sketch |
 | Ink fade | After the path is drawn | Keeps the pitch legible and gives the next action room |
-| Ball travel and spin | Every trajectory | Shows the ball travelling from the actor to the destination |
+| Ball travel and spin | Every trajectory | A visible football starts at the actor, follows the same curved path as the arrow, rotates in flight, and settles at the destination |
 | Ball easing | Every trajectory | Starts decisively after the kick and settles into the receiver |
 | Kicking cue | Passes, crosses, shots, and clearances | Brief directional mark shows the passer initiating the action |
 | Receiver anticipation | Two-player actions | Signals who is about to receive before arrival |
@@ -51,6 +51,7 @@ This is the visual vocabulary for the tactical replay. The rule is that every ef
 - Carries and dribbles use dotted movement ink without a directional arrow.
 - Dash segments and dot marks use deliberately different lengths and gaps so the two movement languages remain legible at a glance.
 - Arrowheads are rendered at 60% opacity, a 40% fade, while the underlying trajectory keeps its own ink fade.
+- The football uses a separate position wrapper and motion wrapper so its start position cannot be overwritten by the SVG motion transform; this keeps the ball visible before, during, and after travel.
 - Shots use a heavier, faster-looking stroke and a tighter focus.
 - Clearances use a strong but muted long trajectory.
 - Goals add the `GOAL` stamp and the strongest emphasis.
