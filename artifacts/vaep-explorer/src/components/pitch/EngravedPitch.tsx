@@ -228,6 +228,7 @@ export function EngravedPitch({
                 trajectory?.isShot && 'trajectory-shot',
                 trajectory?.isClearance && 'trajectory-clearance',
               )}
+                id={`trajectory-path-${selected.actionId}`}
               markerEnd="url(#vaep-arrow)"
               pathLength={1}
               stroke="currentColor"
@@ -247,7 +248,6 @@ export function EngravedPitch({
                 y2={startY + ((endY - startY) / (Math.hypot(selected.endX - selected.startX, endY - startY) || 1)) * 3.1}
               />
             ) : null}
-            <circle cx={selected.endX} cy={endY} fill="currentColor" r="1.4" />
             {isHighValue ? (
               <g className="pitch-vaep-callout" transform={`translate(${Math.min(selected.startX + 4, PITCH_WIDTH - 18)} ${Math.max(startY - 5, 5)})`}>
                 <rect height="4.2" rx="0.5" width="17" x="-1" y="-3.3" />
@@ -330,15 +330,17 @@ export function EngravedPitch({
           );
         })}
         {selected ? (
-          <g className="pitch-ball" pointerEvents="none" transform={`translate(${selected.startX} ${startY})`}>
+          <g className="pitch-ball" pointerEvents="none">
             <g className="pitch-ball-motion">
               <g className="pitch-ball-spin">
-                <circle cx="0" cy="0" fill="hsl(var(--background))" r="1.9" stroke="currentColor" strokeWidth="0.5" />
-                <path d="M-0.58 -0.72 L0.38 -0.5 L0.7 0.28 L0 0.82 L-0.72 0.34 L-0.58 -0.72Z" fill="currentColor" opacity="0.9" stroke="currentColor" strokeWidth="0.16" />
-                <path d="M-0.58 -0.72 L-1.3 -0.3 M0.38 -0.5 L1.22 -0.8 M0.7 0.28 L1.3 0.72 M0 0.82 L-0.24 1.48 M-0.72 0.34 L-1.32 0.8" fill="none" stroke="currentColor" strokeWidth="0.2" />
+                <circle cx="0" cy="0" fill="hsl(var(--background))" r="2.15" stroke="currentColor" strokeWidth="0.58" />
+                <path d="M-0.62 -0.82 L0.44 -0.58 L0.76 0.32 L0 0.94 L-0.82 0.38 L-0.62 -0.82Z" fill="currentColor" stroke="currentColor" strokeWidth="0.16" />
+                <path d="M-0.62 -0.82 L-1.48 -0.36 M0.44 -0.58 L1.4 -0.9 M0.76 0.32 L1.48 0.82 M0 0.94 L-0.28 1.7 M-0.82 0.38 L-1.5 0.92" fill="none" stroke="currentColor" strokeLinecap="round" strokeWidth="0.22" />
                 <animateTransform attributeName="transform" dur="950ms" fill="freeze" from="rotate(0)" to="rotate(360)" type="rotate" />
               </g>
-              <animateMotion calcMode="spline" dur="950ms" fill="freeze" keySplines="0.22 1 0.36 1" keyTimes="0;1" path={trajectory?.relative} rotate="auto" />
+              <animateMotion calcMode="spline" dur="950ms" fill="freeze" keySplines="0.22 1 0.36 1" keyTimes="0;1" rotate="auto">
+                <mpath href={`#trajectory-path-${selected.actionId}`} />
+              </animateMotion>
             </g>
           </g>
         ) : null}
