@@ -125,7 +125,7 @@
   --chart-4: 232 32% 74%;
   --chart-5: 232 70% 30%;
 
-  --app-font-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+  --app-font-sans: 'Geist', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
   --app-font-serif: 'Iowan Old Style', Baskerville, 'Libre Baskerville', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, 'Times New Roman', serif;
   --app-font-body: 'Iowan Old Style', Baskerville, 'Libre Baskerville', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, 'Times New Roman', serif;
   --app-font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;

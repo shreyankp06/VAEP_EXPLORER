@@ -187,7 +187,7 @@ export function EngravedPitch({
               />
               <text
                 fill="hsl(var(--primary-foreground))"
-                fontFamily="system-ui, sans-serif"
+                fontFamily="Geist, system-ui, sans-serif"
                 fontSize="2.4"
                 fontWeight="600"
                 textAnchor="middle"
@@ -198,7 +198,7 @@ export function EngravedPitch({
               </text>
               <text
                 fill="currentColor"
-                fontFamily="system-ui, sans-serif"
+                fontFamily="Geist, system-ui, sans-serif"
                 fontSize="2.1"
                 letterSpacing="0.08"
                 textAnchor="middle"
@@ -208,7 +208,7 @@ export function EngravedPitch({
                 {playerAbbr(marker.name)}
               </text>
               {marker.isPartner ? (
-                <text className="pitch-next-label" fill="currentColor" fontFamily="system-ui, sans-serif" fontSize="1.7" letterSpacing="0.12" textAnchor="middle" x={marker.x} y={marker.y - 4.8}>
+                <text className="pitch-next-label" fill="currentColor" fontFamily="Geist, system-ui, sans-serif" fontSize="1.7" letterSpacing="0.12" textAnchor="middle" x={marker.x} y={marker.y - 4.8}>
                   RECEIVER
                 </text>
               ) : null}
