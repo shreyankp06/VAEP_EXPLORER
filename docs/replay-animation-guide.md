@@ -52,6 +52,7 @@ This is the visual vocabulary for the tactical replay. The rule is that every ef
 - Dash segments and dot marks use deliberately different lengths and gaps so the two movement languages remain legible at a glance.
 - Arrowheads are rendered at 60% opacity, a 40% fade, while the underlying trajectory keeps its own ink fade.
 - The football uses a separate position wrapper and motion wrapper so its start position cannot be overwritten by the SVG motion transform; this keeps the ball visible before, during, and after travel.
+- The football is rendered after player markers in the SVG paint order, so it remains visually on top of the pitch symbols throughout the action.
 - Shots use a heavier, faster-looking stroke and a tighter focus.
 - Clearances use a strong but muted long trajectory.
 - Goals add the `GOAL` stamp and the strongest emphasis.

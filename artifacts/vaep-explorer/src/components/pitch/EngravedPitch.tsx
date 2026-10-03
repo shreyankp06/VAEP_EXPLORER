@@ -247,17 +247,6 @@ export function EngravedPitch({
                 y2={startY + ((endY - startY) / (Math.hypot(selected.endX - selected.startX, endY - startY) || 1)) * 3.1}
               />
             ) : null}
-            <g className="pitch-ball" transform={`translate(${selected.startX} ${startY})`}>
-              <g className="pitch-ball-motion">
-                <g className="pitch-ball-spin">
-                  <circle cx="0" cy="0" fill="hsl(var(--background))" r="1.7" stroke="currentColor" strokeWidth="0.45" />
-                  <path d="M-0.5 -0.65 L0.35 -0.45 L0.62 0.25 L0 0.72 L-0.65 0.3 L-0.5 -0.65Z" fill="none" stroke="currentColor" strokeWidth="0.2" />
-                  <path d="M-0.5 -0.65 L-1.05 -0.25 M0.35 -0.45 L0.95 -0.72 M0.62 0.25 L1.05 0.58 M0 0.72 L-0.2 1.2 M-0.65 0.3 L-1.12 0.65" fill="none" stroke="currentColor" strokeWidth="0.18" />
-                  <animateTransform attributeName="transform" dur="950ms" fill="freeze" from="rotate(0)" to="rotate(360)" type="rotate" />
-                </g>
-                <animateMotion calcMode="spline" dur="950ms" fill="freeze" keySplines="0.22 1 0.36 1" keyTimes="0;1" path={trajectory?.relative} rotate="auto" />
-              </g>
-            </g>
             <circle cx={selected.endX} cy={endY} fill="currentColor" r="1.4" />
             {isHighValue ? (
               <g className="pitch-vaep-callout" transform={`translate(${Math.min(selected.startX + 4, PITCH_WIDTH - 18)} ${Math.max(startY - 5, 5)})`}>
@@ -340,6 +329,19 @@ export function EngravedPitch({
             </g>
           );
         })}
+        {selected ? (
+          <g className="pitch-ball" pointerEvents="none" transform={`translate(${selected.startX} ${startY})`}>
+            <g className="pitch-ball-motion">
+              <g className="pitch-ball-spin">
+                <circle cx="0" cy="0" fill="hsl(var(--background))" r="1.9" stroke="currentColor" strokeWidth="0.5" />
+                <path d="M-0.58 -0.72 L0.38 -0.5 L0.7 0.28 L0 0.82 L-0.72 0.34 L-0.58 -0.72Z" fill="currentColor" opacity="0.9" stroke="currentColor" strokeWidth="0.16" />
+                <path d="M-0.58 -0.72 L-1.3 -0.3 M0.38 -0.5 L1.22 -0.8 M0.7 0.28 L1.3 0.72 M0 0.82 L-0.24 1.48 M-0.72 0.34 L-1.32 0.8" fill="none" stroke="currentColor" strokeWidth="0.2" />
+                <animateTransform attributeName="transform" dur="950ms" fill="freeze" from="rotate(0)" to="rotate(360)" type="rotate" />
+              </g>
+              <animateMotion calcMode="spline" dur="950ms" fill="freeze" keySplines="0.22 1 0.36 1" keyTimes="0;1" path={trajectory?.relative} rotate="auto" />
+            </g>
+          </g>
+        ) : null}
       </svg>
       {teams.length === 2 ? (
         <div aria-label="Team key" className="pitch-team-key">
