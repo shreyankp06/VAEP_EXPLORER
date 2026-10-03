@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { Action } from '@workspace/api-client-react';
 import { playerAbbr, shirtNumber } from '@/lib/format';
 import { PITCH_HEIGHT, PITCH_WIDTH, teamInk } from '@/lib/vaep';
@@ -70,6 +70,10 @@ function trajectoryFor(action: Action) {
   const type = action.actionType.toLowerCase().replace(/[-_]/g, ' ');
   const isCross = type.includes('cross') || type.includes('corner');
   const isThroughBall = type.includes('through ball');
+  const isCarry = type.includes('dribble') || type.includes('carry') || type.includes('run');
+  const isShot = type.includes('shot');
+  const isClearance = type.includes('clearance');
+  const isGoal = action.result.toLowerCase() === 'goal';
   const isLong = distance > 25 || isCross;
   const bend = isCross ? 0.24 : isThroughBall ? 0.15 : isLong ? 0.1 : 0.035;
   const normalX = -dy / (distance || 1);
@@ -78,7 +82,16 @@ function trajectoryFor(action: Action) {
   const controlY = (startY + endY) / 2 + normalY * distance * bend;
   const d = `M ${startX.toFixed(2)} ${startY.toFixed(2)} Q ${controlX.toFixed(2)} ${controlY.toFixed(2)} ${endX.toFixed(2)} ${endY.toFixed(2)}`;
   const relative = `M 0 0 Q ${(controlX - startX).toFixed(2)} ${(controlY - startY).toFixed(2)} ${dx.toFixed(2)} ${(-action.endY + action.startY).toFixed(2)}`;
-  return { d, relative, isLong, isThroughBall, isCross };
+  return { d, relative, isLong, isThroughBall, isCross, isCarry, isShot, isClearance, isGoal };
+}
+
+function cameraBox(action?: Action, trajectory?: ReturnType<typeof trajectoryFor>) {
+  if (!action || !trajectory || (!trajectory.isShot && !trajectory.isGoal && action.endX < 72)) return `0 0 ${PITCH_WIDTH} ${PITCH_HEIGHT}`;
+  const width = 82;
+  const height = 56;
+  const x = Math.min(Math.max(action.endX - width * 0.58, 0), PITCH_WIDTH - width);
+  const y = Math.min(Math.max(PITCH_HEIGHT - action.endY - height * 0.5, 0), PITCH_HEIGHT - height);
+  return `${x.toFixed(2)} ${y.toFixed(2)} ${width} ${height}`;
 }
 
 function PitchMarkings() {
@@ -130,6 +143,7 @@ export function EngravedPitch({
   playerDetails?: Record<number, PlayerPitchDetail>;
 }) {
   const [pinnedPlayerId, setPinnedPlayerId] = useState<number | null>(null);
+  const [freezeFrame, setFreezeFrame] = useState(false);
   const markers = uniqueMarkers(actions, selected);
   const startY = selected ? PITCH_HEIGHT - selected.startY : 0;
   const endY = selected ? PITCH_HEIGHT - selected.endY : 0;
@@ -138,13 +152,25 @@ export function EngravedPitch({
   const activeMarker = markers.find((marker) => marker.playerId === activePlayerId);
   const activeDetail = activeMarker ? playerDetails?.[activeMarker.playerId] : undefined;
   const trajectory = selected ? trajectoryFor(selected) : undefined;
+  const isHighValue = Boolean(selected && (Math.abs(selected.vaepValue) >= 0.08 || trajectory?.isShot || trajectory?.isGoal));
+  const activeViewBox = cameraBox(selected, trajectory);
+
+  useEffect(() => {
+    if (!isHighValue) {
+      setFreezeFrame(false);
+      return;
+    }
+    setFreezeFrame(true);
+    const timeout = window.setTimeout(() => setFreezeFrame(false), trajectory?.isGoal ? 720 : 480);
+    return () => window.clearTimeout(timeout);
+  }, [selected?.actionId, isHighValue, trajectory?.isGoal]);
 
   return (
-    <div className="relative overflow-visible border border-primary/30 bg-background text-primary">
+    <div className={cn('relative overflow-visible border border-primary/30 bg-background text-primary', isHighValue && 'pitch-high-value', trajectory?.isShot && 'pitch-shot-frame', trajectory?.isGoal && 'pitch-goal-frame', freezeFrame && 'pitch-freeze-frame')}>
       <svg
         aria-label={selected ? `Pitch diagram for ${selected.playerName}'s ${selected.actionType}` : 'Engraved tactical pitch'}
         className="h-auto w-full"
-        viewBox={`0 0 ${PITCH_WIDTH} ${PITCH_HEIGHT}`}
+        viewBox={activeViewBox}
       >
         <defs>
           <pattern height="3" id="pitch-hatch" patternUnits="userSpaceOnUse" width="3">
@@ -166,6 +192,9 @@ export function EngravedPitch({
                 trajectory?.isLong && 'trajectory-long',
                 trajectory?.isThroughBall && 'trajectory-through-ball',
                 trajectory?.isCross && 'trajectory-cross',
+                trajectory?.isCarry && 'trajectory-carry',
+                trajectory?.isShot && 'trajectory-shot',
+                trajectory?.isClearance && 'trajectory-clearance',
               )}
               markerEnd="url(#vaep-arrow)"
               pathLength={1}
@@ -184,6 +213,16 @@ export function EngravedPitch({
               <animateMotion dur="950ms" fill="freeze" path={trajectory?.relative} rotate="auto" />
             </g>
             <circle cx={selected.endX} cy={endY} fill="currentColor" r="1.4" />
+            {isHighValue ? (
+              <g className="pitch-vaep-callout" transform={`translate(${Math.min(selected.startX + 4, PITCH_WIDTH - 18)} ${Math.max(startY - 5, 5)})`}>
+                <rect height="4.2" rx="0.5" width="17" x="-1" y="-3.3" />
+                <text fill="hsl(var(--primary-foreground))" fontFamily="Geist, system-ui, sans-serif" fontSize="2.15" fontWeight="600" textAnchor="middle" x="7.5" y="-0.35">
+                  {selected.vaepValue >= 0 ? '+' : ''}{selected.vaepValue.toFixed(3)} VAEP
+                </text>
+              </g>
+            ) : null}
+            {trajectory?.isGoal ? <text className="pitch-event-stamp" x={selected.endX} y={Math.max(endY - 5, 5)}>GOAL</text> : null}
+            {trajectory?.isShot && !trajectory.isGoal ? <text className="pitch-event-stamp" x={selected.endX} y={Math.max(endY - 5, 5)}>SHOT</text> : null}
           </g>
         ) : null}
         {markers.map((marker) => {
@@ -193,7 +232,7 @@ export function EngravedPitch({
             <g
               key={marker.playerId}
               aria-label={`${marker.name}${marker.isPartner ? ', receiving player' : ''}`}
-              className={cn('pitch-player cursor-pointer', marker.isPartner && 'pitch-player-partner')}
+              className={cn('pitch-player cursor-pointer', marker.isPartner && 'pitch-player-partner pitch-player-anticipating', selected?.playerId === marker.playerId && 'pitch-player-actor')}
               onClick={() => {
                 setPinnedPlayerId((current) => current === marker.playerId ? null : marker.playerId);
                 const related = [...actions].reverse().find((action) => action.playerId === marker.playerId);

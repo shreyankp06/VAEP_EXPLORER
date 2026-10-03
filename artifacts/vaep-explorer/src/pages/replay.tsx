@@ -25,6 +25,30 @@ function TimelineGlyph({ type, result }: { type: string; result: string }) {
   return <VaepGlyph className="h-4 w-4" />;
 }
 
+function actionIntensity(action: Action) {
+  const type = action.actionType.toLowerCase().replace(/[-_]/g, ' ');
+  const attackingProgress = Math.max(0, Math.min(1, action.endX / 105));
+  const value = Math.min(1, 0.18 + Math.abs(action.vaepValue) * 2.4 + attackingProgress * 0.18
+    + (type.includes('shot') ? 0.28 : 0)
+    + (action.result.toLowerCase() === 'goal' ? 0.42 : 0));
+  return Math.round(value * 12);
+}
+
+function IntensityMeter({ action }: { action: Action }) {
+  const level = actionIntensity(action);
+  return (
+    <div aria-label={`Match intensity ${level} of 12`} className="replay-intensity" title="Intensity combines action value, attacking location, shots, and goals">
+      <div className="flex items-center justify-between gap-3">
+        <span className="label-meta">Match intensity</span>
+        <span className="font-sans text-[0.65rem] tabular-nums text-muted-foreground">{String(level).padStart(2, '0')} / 12</span>
+      </div>
+      <div className="mt-2 flex gap-1" role="meter" aria-valuemax={12} aria-valuemin={0} aria-valuenow={level}>
+        {Array.from({ length: 12 }, (_, index) => <span className={cn('replay-intensity-segment', index < level && 'replay-intensity-segment-active')} key={index} />)}
+      </div>
+    </div>
+  );
+}
+
 function MatchHero({ match, matches, matchId, onMatchChange }: {
   match?: Match;
   matches: Match[];
@@ -298,6 +322,7 @@ export default function ReplayPage() {
                     step={1}
                     value={[currentIndex]}
                   />
+                  <IntensityMeter action={action} />
                   <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
                     <div className="flex items-center gap-2">
                       <Button aria-label="Restart replay" onClick={() => { setCurrentIndex(0); setIsPlaying(false); }} size="icon" variant="outline"><RotateCcw /></Button>
