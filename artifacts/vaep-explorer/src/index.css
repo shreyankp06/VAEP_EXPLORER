@@ -570,38 +570,6 @@
     transition: cx 420ms var(--ease-out), cy 420ms var(--ease-out), r 180ms var(--ease-out);
   }
 
-  .pitch-team-key {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    border-top: 1px solid hsl(var(--primary) / 0.16);
-    padding: 7px 10px 8px;
-    color: hsl(var(--muted-foreground));
-    font-family: var(--app-font-sans), sans-serif;
-    font-size: 9px;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-  }
-
-  .pitch-team-key-item {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-  }
-
-  .pitch-team-swatch {
-    display: inline-block;
-    width: 9px;
-    height: 9px;
-    border-radius: 999px;
-    background: #2238c4;
-  }
-
-  .pitch-team-swatch-away {
-    background: hsl(var(--background));
-    border: 1px dashed #6374d8;
-  }
-
   .pitch-player-anticipating {
     animation: receiver-anticipate 950ms ease-out both;
   }

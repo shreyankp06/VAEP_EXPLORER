@@ -9,7 +9,7 @@ This is the visual vocabulary for the tactical replay. The rule is that every ef
 | Solid player circle | Player involved in the current action |
 | Deep cobalt player circle | First team in the match action feed; primary team tone |
 | Ivory player circle with sparse lighter-cobalt dashed outline and blue number | Second team in the match action feed; inverted symbol treatment |
-| Team key below the pitch | Maps each team name to its player-symbol treatment |
+| Reading the plate box below the pitch | Maps each team name to its player-symbol treatment and explains the replay marks |
 | Ring around a player | Active, hovered, or selected player |
 | Expanding receiver ring | The next receiving player is anticipating the ball |
 | Dashed blue ink path | Ball trajectory for a pass or other movement |
@@ -72,7 +72,9 @@ This is the visual vocabulary for the tactical replay. The rule is that every ef
 
 ## On-page legend
 
-The interactive pitch is followed by a compact “Reading the plate” legend. It repeats the most important meanings in context: the two team symbols, receiver ring, pass/carry/shot line styles, football marker, high-value VAEP callout, and interruption stamp. This quick legend is intentionally shorter than this document and is the first reference users see while replaying an action.
+The interactive pitch is followed by a compact “Reading the plate” legend. It is the only place where team names are repeated below the pitch, and it explains the two team symbols, receiver ring, pass/carry/shot line styles, football marker, high-value VAEP callout, and interruption stamp. This quick legend is intentionally shorter than this document and is the first reference users see while replaying an action.
+
+The pitch viewBox includes a small four-unit safety margin around the field. The field geometry and its rendered container remain the same; the extra space prevents edge players and the ball from being clipped.
 
 ## Implementation map
 

@@ -86,12 +86,12 @@ function trajectoryFor(action: Action) {
 }
 
 function cameraBox(action?: Action, trajectory?: ReturnType<typeof trajectoryFor>) {
-  if (!action || !trajectory || (!trajectory.isShot && !trajectory.isGoal)) return `0 0 ${PITCH_WIDTH} ${PITCH_HEIGHT}`;
+  if (!action || !trajectory || (!trajectory.isShot && !trajectory.isGoal)) return `-4 -4 ${PITCH_WIDTH + 8} ${PITCH_HEIGHT + 8}`;
   const width = 82;
   const height = 56;
-  const x = Math.min(Math.max(action.endX - width * 0.58, 0), PITCH_WIDTH - width);
-  const y = Math.min(Math.max(PITCH_HEIGHT - action.endY - height * 0.5, 0), PITCH_HEIGHT - height);
-  return `${x.toFixed(2)} ${y.toFixed(2)} ${width} ${height}`;
+  const x = Math.min(Math.max(action.endX - width * 0.58, 0), PITCH_WIDTH - width) - 4;
+  const y = Math.min(Math.max(PITCH_HEIGHT - action.endY - height * 0.5, 0), PITCH_HEIGHT - height) - 4;
+  return `${x.toFixed(2)} ${y.toFixed(2)} ${width + 8} ${height + 8}`;
 }
 
 function teamTone(team: string, actions: Action[]) {
@@ -190,7 +190,6 @@ export function EngravedPitch({
   const [pinnedPlayerId, setPinnedPlayerId] = useState<number | null>(null);
   const [freezeFrame, setFreezeFrame] = useState(false);
   const markers = uniqueMarkers(actions, selected);
-  const teams = [...new Set(actions.map((action) => action.team))].slice(0, 2);
   const startY = selected ? PITCH_HEIGHT - selected.startY : 0;
   const endY = selected ? PITCH_HEIGHT - selected.endY : 0;
   const dim = hoveredPlayerId != null;
@@ -362,16 +361,6 @@ export function EngravedPitch({
         })}
         {selected && trajectory ? <AnimatedFootball actionId={selected.actionId} key={selected.actionId} trajectory={trajectory} /> : null}
       </svg>
-      {teams.length === 2 ? (
-        <div aria-label="Team key" className="pitch-team-key">
-          {teams.map((team, index) => (
-            <span className="pitch-team-key-item" key={team}>
-              <span className={cn('pitch-team-swatch', index === 1 && 'pitch-team-swatch-away')} />
-              {team}
-            </span>
-          ))}
-        </div>
-      ) : null}
       {activeMarker ? (
         <div
           className={cn('pitch-dossier', activeMarker.x >= PITCH_WIDTH * 0.62 ? 'pitch-dossier-left' : 'pitch-dossier-right', pinnedPlayerId === activeMarker.playerId && 'pitch-dossier-pinned')}
