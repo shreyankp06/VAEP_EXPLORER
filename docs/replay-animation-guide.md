@@ -27,9 +27,11 @@ This is the visual vocabulary for the tactical replay. The rule is that every ef
 | Path draw-on | Every selected action | Makes the action read as a live tactical sketch |
 | Ink fade | After the path is drawn | Keeps the pitch legible and gives the next action room |
 | Ball travel and spin | Every trajectory | Shows the ball travelling from the actor to the destination |
+| Ball easing | Every trajectory | Starts decisively after the kick and settles into the receiver |
+| Kicking cue | Passes, crosses, shots, and clearances | Brief directional mark shows the passer initiating the action |
 | Receiver anticipation | Two-player actions | Signals who is about to receive before arrival |
-| Player-position interpolation | Player coordinates change | Keeps player movement continuous rather than teleporting |
-| High-value freeze emphasis | Large absolute VAEP, shot, or goal | Briefly holds attention on moments that matter |
+| Player-position interpolation | Player coordinates change | Keeps player movement continuous rather than teleporting; carries animate the actor to the end point |
+| Freeze dwell | Large absolute VAEP, shot, goal, or interruption | Holds the current replay frame longer before advancing |
 | Shot treatment | Shot actions | Stronger stroke, glow, and tighter attacking focus |
 | Goal treatment | Goal results | Strongest border pulse, goal stamp, and attacking focus |
 | Tactical camera focus | Shots, goals, and advanced attacking actions | Gently narrows attention toward the attacking end |
@@ -46,6 +48,7 @@ This is the visual vocabulary for the tactical replay. The rule is that every ef
 - Clearances use a strong but muted long trajectory.
 - Goals add the `GOAL` stamp and the strongest emphasis.
 - Negative or low-value actions remain quiet; value should guide emphasis, not replace the match narrative.
+- Goals, shots, fouls, restarts, and offside events receive a short dwell so the match reads as chapters rather than a continuous jump-cut.
 
 ## Accessibility and interaction
 

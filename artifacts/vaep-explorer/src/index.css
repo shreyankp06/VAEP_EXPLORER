@@ -515,6 +515,12 @@
     100% { opacity: 0.86; transform: translateY(0); }
   }
 
+  @keyframes kick-cue {
+    0% { opacity: 0; transform: scaleX(0.2); transform-origin: left center; }
+    45% { opacity: 0.75; transform: scaleX(1); }
+    100% { opacity: 0; transform: scaleX(0.65); }
+  }
+
   .draw-path {
     stroke-dasharray: 0.018 0.012;
     stroke-dashoffset: 1;
@@ -594,6 +600,19 @@
     letter-spacing: 0.28px;
     text-anchor: middle;
     animation: event-stamp 720ms ease-out both;
+  }
+
+  .pitch-kick-cue {
+    stroke: currentColor;
+    stroke-linecap: round;
+    stroke-width: 0.8;
+    opacity: 0;
+    animation: kick-cue 260ms 120ms ease-out both;
+  }
+
+  .pitch-interruption-stamp {
+    font-size: 2.5px;
+    letter-spacing: 0.2px;
   }
 
   .pitch-pulse {
@@ -710,7 +729,11 @@
     .pitch-pulse,
     .pitch-marker-halo,
     .pitch-player-partner,
-    .pitch-receiver-ring {
+    .pitch-player-anticipating,
+    .pitch-receiver-ring,
+    .pitch-kick-cue,
+    .pitch-event-stamp,
+    .pitch-freeze-frame {
       animation: none;
     }
 

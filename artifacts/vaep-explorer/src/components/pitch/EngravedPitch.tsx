@@ -74,6 +74,7 @@ function trajectoryFor(action: Action) {
   const isShot = type.includes('shot');
   const isClearance = type.includes('clearance');
   const isGoal = action.result.toLowerCase() === 'goal';
+  const isInterruption = ['foul', 'throw in', 'corner', 'free kick', 'goal kick', 'offside'].some((name) => type.includes(name));
   const isLong = distance > 25 || isCross;
   const bend = isCross ? 0.24 : isThroughBall ? 0.15 : isLong ? 0.1 : 0.035;
   const normalX = -dy / (distance || 1);
@@ -82,7 +83,7 @@ function trajectoryFor(action: Action) {
   const controlY = (startY + endY) / 2 + normalY * distance * bend;
   const d = `M ${startX.toFixed(2)} ${startY.toFixed(2)} Q ${controlX.toFixed(2)} ${controlY.toFixed(2)} ${endX.toFixed(2)} ${endY.toFixed(2)}`;
   const relative = `M 0 0 Q ${(controlX - startX).toFixed(2)} ${(controlY - startY).toFixed(2)} ${dx.toFixed(2)} ${(-action.endY + action.startY).toFixed(2)}`;
-  return { d, relative, isLong, isThroughBall, isCross, isCarry, isShot, isClearance, isGoal };
+  return { d, relative, isLong, isThroughBall, isCross, isCarry, isShot, isClearance, isGoal, isInterruption };
 }
 
 function cameraBox(action?: Action, trajectory?: ReturnType<typeof trajectoryFor>) {
@@ -206,11 +207,20 @@ export function EngravedPitch({
             />
             <circle className="pitch-pulse" cx={selected.startX} cy={startY} fill="none" r="3.2" stroke="currentColor" strokeWidth="0.35" />
             <circle cx={selected.startX} cy={startY} fill="hsl(var(--background))" r="1.7" stroke="currentColor" strokeWidth="0.7" />
+            {!trajectory?.isCarry && !trajectory?.isInterruption ? (
+              <line
+                className="pitch-kick-cue"
+                x1={selected.startX}
+                x2={selected.startX + ((selected.endX - selected.startX) / (Math.hypot(selected.endX - selected.startX, selected.endY - selected.startY) || 1)) * 3.1}
+                y1={startY}
+                y2={startY + ((endY - startY) / (Math.hypot(selected.endX - selected.startX, endY - startY) || 1)) * 3.1}
+              />
+            ) : null}
             <g className="pitch-ball" transform={`translate(${selected.startX} ${startY})`}>
               <circle cx="0" cy="0" fill="hsl(var(--background))" r="1.45" stroke="currentColor" strokeWidth="0.35" />
               <path d="M-0.5 -0.65 L0.35 -0.45 L0.62 0.25 L0 0.72 L-0.65 0.3 L-0.5 -0.65Z" fill="none" stroke="currentColor" strokeWidth="0.18" />
               <path d="M-0.5 -0.65 L-1.05 -0.25 M0.35 -0.45 L0.95 -0.72 M0.62 0.25 L1.05 0.58 M0 0.72 L-0.2 1.2 M-0.65 0.3 L-1.12 0.65" fill="none" stroke="currentColor" strokeWidth="0.16" />
-              <animateMotion dur="950ms" fill="freeze" path={trajectory?.relative} rotate="auto" />
+              <animateMotion calcMode="spline" dur="950ms" fill="freeze" keySplines="0.22 1 0.36 1" keyTimes="0;1" path={trajectory?.relative} rotate="auto" />
             </g>
             <circle cx={selected.endX} cy={endY} fill="currentColor" r="1.4" />
             {isHighValue ? (
@@ -223,6 +233,7 @@ export function EngravedPitch({
             ) : null}
             {trajectory?.isGoal ? <text className="pitch-event-stamp" x={selected.endX} y={Math.max(endY - 5, 5)}>GOAL</text> : null}
             {trajectory?.isShot && !trajectory.isGoal ? <text className="pitch-event-stamp" x={selected.endX} y={Math.max(endY - 5, 5)}>SHOT</text> : null}
+            {trajectory?.isInterruption ? <text className="pitch-event-stamp pitch-interruption-stamp" x={selected.endX} y={Math.max(endY - 5, 5)}>RESET</text> : null}
           </g>
         ) : null}
         {markers.map((marker) => {
@@ -277,6 +288,16 @@ export function EngravedPitch({
                 <text className="pitch-next-label" fill="currentColor" fontFamily="Geist, system-ui, sans-serif" fontSize="1.7" letterSpacing="0.12" textAnchor="middle" x={marker.x} y={marker.y - 4.8}>
                   RECEIVER
                 </text>
+              ) : null}
+              {selected && trajectory?.isCarry && selected.playerId === marker.playerId ? (
+                <animateTransform
+                  attributeName="transform"
+                  dur="950ms"
+                  fill="freeze"
+                  from="translate(0 0)"
+                  to={`translate(${(selected.endX - marker.x).toFixed(2)} ${(PITCH_HEIGHT - selected.endY - marker.y).toFixed(2)})`}
+                  type="translate"
+                />
               ) : null}
             </g>
           );

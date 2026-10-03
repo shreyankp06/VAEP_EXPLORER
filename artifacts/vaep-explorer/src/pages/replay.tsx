@@ -34,6 +34,16 @@ function actionIntensity(action: Action) {
   return Math.round(value * 12);
 }
 
+function replayPauseFor(action: Action) {
+  const type = action.actionType.toLowerCase().replace(/[-_]/g, ' ');
+  const result = action.result.toLowerCase();
+  if (result === 'goal') return 1100;
+  if (type.includes('shot')) return 650;
+  if (['foul', 'throw in', 'corner', 'free kick', 'goal kick', 'offside'].some((name) => type.includes(name))) return 800;
+  if (Math.abs(action.vaepValue) >= 0.08) return 450;
+  return 0;
+}
+
 function IntensityMeter({ action }: { action: Action }) {
   const level = actionIntensity(action);
   return (
@@ -242,13 +252,13 @@ export default function ReplayPage() {
   }, [matchId]);
 
   useEffect(() => {
-    if (!isPlaying || actions.length < 2) return;
+    if (!isPlaying || actions.length < 2 || !action) return;
     const timeout = window.setTimeout(
       () => setCurrentIndex((index) => (index >= actions.length - 1 ? 0 : index + 1)),
-      1800 / speed,
+      (1800 + replayPauseFor(action)) / speed,
     );
     return () => window.clearTimeout(timeout);
-  }, [actions.length, currentIndex, isPlaying, speed]);
+  }, [action, actions.length, currentIndex, isPlaying, speed]);
 
   useEffect(() => {
     if (selectedSequence >= sequences.length) setSelectedSequence(0);
