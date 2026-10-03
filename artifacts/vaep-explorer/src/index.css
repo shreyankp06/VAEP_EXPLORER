@@ -522,15 +522,16 @@
   }
 
   .draw-path {
-    stroke-dasharray: 0.018 0.012;
+    stroke-dasharray: 0.028 0.034;
     stroke-dashoffset: 1;
     opacity: 0.82;
+    stroke-linecap: round;
     animation: draw-path 0.7s ease forwards, ink-fade 1.6s 0.65s ease-out forwards;
   }
 
   .trajectory-long {
     stroke-width: 0.72;
-    stroke-dasharray: 0.012 0.016;
+    stroke-dasharray: 0.022 0.042;
   }
 
   .trajectory-through-ball {
@@ -542,21 +543,22 @@
   }
 
   .trajectory-carry {
-    stroke-dasharray: 0.006 0.02;
+    stroke-dasharray: 0.004 0.05;
     stroke-width: 0.6;
     opacity: 0.58;
     marker-end: none;
+    stroke-linecap: round;
   }
 
   .trajectory-shot {
     stroke-width: 1.25;
-    stroke-dasharray: 0.028 0.008;
+    stroke-dasharray: 0.045 0.018;
     filter: drop-shadow(0 0 1.4px hsl(var(--primary) / 0.62));
   }
 
   .trajectory-clearance {
     stroke-width: 1;
-    stroke-dasharray: 0.022 0.014;
+    stroke-dasharray: 0.032 0.034;
     opacity: 0.7;
   }
 

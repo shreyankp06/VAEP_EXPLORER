@@ -209,7 +209,7 @@ export function EngravedPitch({
             <path d="M0 3 L3 0" stroke="currentColor" strokeWidth="0.18" />
           </pattern>
           <marker id="vaep-arrow" markerHeight="4" markerWidth="4" orient="auto" refX="3.2" refY="2">
-            <path d="M0,0 L4,2 L0,4 z" fill="currentColor" />
+            <path d="M0,0 L4,2 L0,4 z" fill="currentColor" opacity="0.6" />
           </marker>
         </defs>
         <rect fill="hsl(var(--background))" height={PITCH_HEIGHT} width={PITCH_WIDTH} />

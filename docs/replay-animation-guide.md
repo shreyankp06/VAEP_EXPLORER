@@ -13,6 +13,8 @@ This is the visual vocabulary for the tactical replay. The rule is that every ef
 | Ring around a player | Active, hovered, or selected player |
 | Expanding receiver ring | The next receiving player is anticipating the ball |
 | Dashed blue ink path | Ball trajectory for a pass or other movement |
+| Spaced dash pattern | Pass, switch, cross, or through-ball trajectory |
+| Fine spaced dot pattern | Carry or dribble movement; dots are intentionally shorter and farther apart |
 | Curved ink path | Long pass, switch, cross, or through ball |
 | Fine dotted path | Carry, dribble, or player-led movement; no pass is implied |
 | Heavy fast path | Shot or clearance |
@@ -47,6 +49,8 @@ This is the visual vocabulary for the tactical replay. The rule is that every ef
 - Through balls use a curved path with a restrained glow.
 - Crosses and corners use the most visible arc.
 - Carries and dribbles use dotted movement ink without a directional arrow.
+- Dash segments and dot marks use deliberately different lengths and gaps so the two movement languages remain legible at a glance.
+- Arrowheads are rendered at 60% opacity, a 40% fade, while the underlying trajectory keeps its own ink fade.
 - Shots use a heavier, faster-looking stroke and a tighter focus.
 - Clearances use a strong but muted long trajectory.
 - Goals add the `GOAL` stamp and the strongest emphasis.
