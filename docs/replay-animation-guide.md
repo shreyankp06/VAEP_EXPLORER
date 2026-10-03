@@ -8,7 +8,7 @@ This is the visual vocabulary for the tactical replay. The rule is that every ef
 | --- | --- |
 | Solid player circle | Player involved in the current action |
 | Deep cobalt player circle | First team in the match action feed; primary team tone |
-| Lighter cobalt player circle with dashed outline | Second team in the match action feed; secondary team tone |
+| Ivory player circle with lighter-cobalt dashed outline and blue number | Second team in the match action feed; inverted symbol treatment |
 | Team key below the pitch | Maps the two blue tones to the team names |
 | Ring around a player | Active, hovered, or selected player |
 | Expanding receiver ring | The next receiving player is anticipating the ball |
@@ -52,7 +52,7 @@ This is the visual vocabulary for the tactical replay. The rule is that every ef
 - Goals add the `GOAL` stamp and the strongest emphasis.
 - Negative or low-value actions remain quiet; value should guide emphasis, not replace the match narrative.
 - Goals, shots, fouls, restarts, and offside events receive a short dwell so the match reads as chapters rather than a continuous jump-cut.
-- Team identity is deliberately encoded with tone and outline rather than unrelated colors: deep cobalt for the first team and lighter cobalt with a dashed outline for the second.
+- Team identity is deliberately encoded with tone, outline, and symbol inversion rather than unrelated colors: deep cobalt with ivory lettering for the first team; ivory fill with lighter-cobalt dashed outline and blue lettering for the second.
 - Camera focus interpolates over 420ms and only engages for shots and goals; normal attacking passes remain full-pitch.
 
 ## Accessibility and interaction

@@ -268,6 +268,7 @@ export function EngravedPitch({
           </g>
         ) : null}
         {markers.map((marker) => {
+          const tone = teamTone(marker.team, actions);
           const active = selected?.playerId === marker.playerId || hoveredPlayerId === marker.playerId;
           const faded = dim && hoveredPlayerId !== marker.playerId && selected?.playerId !== marker.playerId;
           return (
@@ -288,14 +289,14 @@ export function EngravedPitch({
               <circle
                 cx={marker.x}
                 cy={marker.y}
-                fill={teamTone(marker.team, actions) === 'away' ? '#6374d8' : teamInk(marker.team)}
+                fill={tone === 'away' ? 'hsl(var(--background))' : teamInk(marker.team)}
                 r={active ? 3.15 : 2.7}
-                stroke="hsl(var(--background))"
-                strokeWidth="0.45"
-                strokeDasharray={teamTone(marker.team, actions) === 'away' ? '0.8 0.45' : undefined}
+                stroke={tone === 'away' ? '#6374d8' : 'hsl(var(--background))'}
+                strokeWidth={tone === 'away' ? '0.65' : '0.45'}
+                strokeDasharray={tone === 'away' ? '0.8 0.45' : undefined}
               />
               <text
-                fill="hsl(var(--primary-foreground))"
+                fill={tone === 'away' ? '#6374d8' : 'hsl(var(--primary-foreground))'}
                 fontFamily="Geist, system-ui, sans-serif"
                 fontSize="2.4"
                 fontWeight="600"
