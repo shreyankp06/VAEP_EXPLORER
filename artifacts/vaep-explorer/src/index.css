@@ -61,6 +61,13 @@
   --font-display: var(--app-font-serif);
   --font-mono: var(--app-font-mono);
 
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --default-transition-duration: 150ms;
+  --default-transition-timing-function: var(--ease-in-out);
+  --container-7xl: 80rem;
+
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -224,6 +231,37 @@
   html,
   body {
     @apply bg-background text-foreground;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+    font-feature-settings: normal;
+    font-variation-settings: normal;
+    scroll-behavior: smooth;
+  }
+
+  button,
+  input,
+  select,
+  textarea {
+    font: inherit;
+    font-feature-settings: inherit;
+    font-variation-settings: inherit;
+    letter-spacing: inherit;
+  }
+
+  button,
+  a,
+  select,
+  input,
+  textarea {
+    transition-duration: var(--default-transition-duration);
+    transition-timing-function: var(--default-transition-timing-function);
+  }
+
+  ::placeholder {
+    color: color-mix(in oklab, var(--blueprint-text) 50%, transparent);
   }
 
   body {
@@ -540,5 +578,19 @@
 
   .match-hero .grid-cols-\[1fr_auto_1fr\] {
     gap: 0.6rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  button,
+  a,
+  select,
+  input,
+  textarea {
+    transition-duration: 0ms;
   }
 }
