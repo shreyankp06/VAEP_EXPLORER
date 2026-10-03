@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import type { Action } from '@workspace/api-client-react';
 import { playerAbbr, shirtNumber } from '@/lib/format';
 import { PITCH_HEIGHT, PITCH_WIDTH, teamInk } from '@/lib/vaep';
@@ -106,15 +107,17 @@ export function EngravedPitch({
   onHoverPlayer?: (playerId: number | null) => void;
   playerDetails?: Record<number, PlayerPitchDetail>;
 }) {
+  const [pinnedPlayerId, setPinnedPlayerId] = useState<number | null>(null);
   const markers = uniqueMarkers(actions, selected);
   const startY = selected ? PITCH_HEIGHT - selected.startY : 0;
   const endY = selected ? PITCH_HEIGHT - selected.endY : 0;
   const dim = hoveredPlayerId != null;
-  const hoveredMarker = markers.find((marker) => marker.playerId === hoveredPlayerId);
-  const hoveredDetail = hoveredMarker ? playerDetails?.[hoveredMarker.playerId] : undefined;
+  const activePlayerId = pinnedPlayerId ?? hoveredPlayerId;
+  const activeMarker = markers.find((marker) => marker.playerId === activePlayerId);
+  const activeDetail = activeMarker ? playerDetails?.[activeMarker.playerId] : undefined;
 
   return (
-    <div className="relative overflow-hidden border border-primary/30 bg-background text-primary">
+    <div className="relative overflow-visible border border-primary/30 bg-background text-primary">
       <svg
         aria-label={selected ? `Pitch diagram for ${selected.playerName}'s ${selected.actionType}` : 'Engraved tactical pitch'}
         className="h-auto w-full"
@@ -165,6 +168,7 @@ export function EngravedPitch({
               aria-label={`${marker.name}${marker.isPartner ? ', receiving player' : ''}`}
               className={cn('pitch-player cursor-pointer', marker.isPartner && 'pitch-player-partner')}
               onClick={() => {
+                setPinnedPlayerId((current) => current === marker.playerId ? null : marker.playerId);
                 const related = [...actions].reverse().find((action) => action.playerId === marker.playerId);
                 if (related) onSelectAction?.(related.actionId);
               }}
@@ -212,15 +216,28 @@ export function EngravedPitch({
           );
         })}
       </svg>
-      {hoveredMarker ? (
+      {activeMarker ? (
         <div
-          className={cn('pitch-dossier', hoveredMarker.x >= PITCH_WIDTH / 2 ? 'pitch-dossier-left' : 'pitch-dossier-right')}
-          style={{ left: `${(hoveredMarker.x / PITCH_WIDTH) * 100}%`, top: `${(hoveredMarker.y / PITCH_HEIGHT) * 100}%` }}
+          className={cn('pitch-dossier', activeMarker.x >= PITCH_WIDTH / 2 ? 'pitch-dossier-left' : 'pitch-dossier-right', pinnedPlayerId === activeMarker.playerId && 'pitch-dossier-pinned')}
+          style={{ left: `${(activeMarker.x / PITCH_WIDTH) * 100}%`, top: `${(activeMarker.y / PITCH_HEIGHT) * 100}%` }}
         >
-          <p className="pitch-dossier-kicker">{hoveredMarker.isPartner ? 'Receiving player' : 'On-ball actor'}</p>
-          <p className="pitch-dossier-name">{hoveredMarker.name}</p>
-          <p className="pitch-dossier-meta">{hoveredMarker.team} · #{shirtNumber(hoveredMarker.playerId)}</p>
-          {hoveredDetail ? <p className="pitch-dossier-stats">{hoveredDetail.actions} actions · {hoveredDetail.totalVaep >= 0 ? '+' : ''}{hoveredDetail.totalVaep.toFixed(3)} VAEP</p> : null}
+          <div className="pitch-dossier-card">
+            <div className="pitch-dossier-head">
+              <div>
+                <p className="pitch-dossier-kicker">Player dossier</p>
+                <p className="pitch-dossier-name">{activeMarker.name}</p>
+              </div>
+              <span className="pitch-dossier-number">{shirtNumber(activeMarker.playerId)}</span>
+            </div>
+            <p className="pitch-dossier-copy">{activeMarker.isPartner ? 'Receiving player' : 'On-ball actor'} · {activeMarker.team}</p>
+            {activeDetail ? (
+              <div className="pitch-dossier-stats">
+                <span>{activeDetail.actions} actions</span>
+                <span>{activeDetail.totalVaep >= 0 ? '+' : ''}{activeDetail.totalVaep.toFixed(3)} VAEP</span>
+                <span>{activeDetail.vaepPer90 >= 0 ? '+' : ''}{activeDetail.vaepPer90.toFixed(3)} / 90</span>
+              </div>
+            ) : null}
+          </div>
         </div>
       ) : null}
     </div>

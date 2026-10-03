@@ -507,10 +507,11 @@
   .pitch-dossier {
     position: absolute;
     z-index: 5;
-    width: 118px;
+    width: 222px;
     overflow: hidden;
     pointer-events: none;
     transform: translateY(-50%);
+    transition: opacity 150ms var(--ease-out), transform 150ms var(--ease-out);
   }
 
   .pitch-dossier-right {
@@ -522,27 +523,64 @@
   }
 
   .pitch-dossier-card {
-    border: 1px solid hsl(var(--primary) / 0.45);
+    border: 1px solid hsl(var(--primary) / 0.62);
     background: hsl(var(--background) / 0.97);
-    box-shadow: 3px 3px 0 hsl(var(--primary) / 0.08);
-    color: hsl(var(--foreground));
-    padding: 5px 7px;
-    line-height: 1.1;
+    box-shadow: 7px 10px 22px hsl(var(--primary) / 0.13);
+    color: var(--blueprint-text);
+    padding: 12px 14px;
+    line-height: 1.3;
+  }
+
+  .pitch-dossier-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .pitch-dossier-number {
+    display: grid;
+    flex: 0 0 auto;
+    width: 26px;
+    height: 26px;
+    place-items: center;
+    border: 1px solid hsl(var(--primary) / 0.65);
+    border-radius: 999px;
+    color: hsl(var(--primary));
+    font-family: var(--app-font-serif), serif;
+    font-size: 12px;
+    line-height: 1;
   }
 
   .pitch-dossier-kicker,
   .pitch-dossier-meta,
   .pitch-dossier-stats {
     font-family: var(--app-font-sans), sans-serif;
-    font-size: 9px;
-    letter-spacing: 0.1em;
+    font-size: 8px;
+    letter-spacing: 0.16em;
     text-transform: uppercase;
   }
 
   .pitch-dossier-kicker { color: hsl(var(--secondary)); }
-  .pitch-dossier-name { margin: 2px 0; font-family: var(--app-font-serif), serif; font-size: 13px; font-weight: 600; line-height: 1.05; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .pitch-dossier-meta,
-  .pitch-dossier-stats { color: hsl(var(--muted-foreground)); letter-spacing: 0.04em; text-transform: none; }
+  .pitch-dossier-name { margin: 3px 0 0; font-family: var(--app-font-serif), serif; font-size: 20px; font-weight: 400; line-height: 1.05; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pitch-dossier-copy { margin-top: 8px; color: var(--blueprint-text); font-family: var(--app-font-sans), sans-serif; font-size: 11px; line-height: 1.35; }
+  .pitch-dossier-stats { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 9px; padding-top: 8px; border-top: 1px solid hsl(var(--primary) / 0.2); color: hsl(var(--muted-foreground)); font-family: var(--app-font-sans), sans-serif; font-size: 9px; letter-spacing: 0.03em; text-transform: none; }
+
+  .pitch-dossier::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    width: 10px;
+    height: 1px;
+    background: hsl(var(--primary) / 0.55);
+  }
+
+  .pitch-dossier-right::before { left: -10px; }
+  .pitch-dossier-left::before { right: -10px; }
+
+  .pitch-dossier-pinned .pitch-dossier-card {
+    border-width: 2px;
+  }
 
   @keyframes pitch-pulse {
     0% { opacity: 0.8; transform: scale(0.72); }
@@ -562,6 +600,10 @@
     .pitch-player-partner {
       animation: none;
     }
+
+    .pitch-dossier {
+      transition: none;
+    }
   }
 
   .match-hero {
@@ -572,6 +614,18 @@
 }
 
 @media (max-width: 640px) {
+  .pitch-dossier {
+    width: 180px;
+  }
+
+  .pitch-dossier-left {
+    margin-left: -190px;
+  }
+
+  .pitch-dossier-name {
+    font-size: 17px;
+  }
+
   .match-hero h1 {
     font-size: clamp(1.8rem, 9vw, 3rem);
   }
