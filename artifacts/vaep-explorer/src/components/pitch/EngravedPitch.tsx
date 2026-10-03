@@ -82,8 +82,7 @@ function trajectoryFor(action: Action) {
   const controlX = (startX + endX) / 2 + normalX * distance * bend;
   const controlY = (startY + endY) / 2 + normalY * distance * bend;
   const d = `M ${startX.toFixed(2)} ${startY.toFixed(2)} Q ${controlX.toFixed(2)} ${controlY.toFixed(2)} ${endX.toFixed(2)} ${endY.toFixed(2)}`;
-  const relative = `M 0 0 Q ${(controlX - startX).toFixed(2)} ${(controlY - startY).toFixed(2)} ${dx.toFixed(2)} ${(-action.endY + action.startY).toFixed(2)}`;
-  return { d, relative, isLong, isThroughBall, isCross, isCarry, isShot, isClearance, isGoal, isInterruption };
+  return { d, startX, startY, endX, endY, controlX, controlY, isLong, isThroughBall, isCross, isCarry, isShot, isClearance, isGoal, isInterruption };
 }
 
 function cameraBox(action?: Action, trajectory?: ReturnType<typeof trajectoryFor>) {
@@ -106,6 +105,38 @@ function parseViewBox(viewBox: string) {
 
 function formatViewBox(values: number[]) {
   return values.map((value) => value.toFixed(2)).join(' ');
+}
+
+function AnimatedFootball({ actionId, trajectory }: { actionId: number; trajectory: ReturnType<typeof trajectoryFor> }) {
+  const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    let frame = 0;
+    const started = performance.now();
+    const duration = 950;
+    const animate = (now: number) => {
+      const elapsed = Math.min((now - started) / duration, 1);
+      setProgress(1 - Math.pow(1 - elapsed, 2.2));
+      if (elapsed < 1) frame = requestAnimationFrame(animate);
+    };
+    frame = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(frame);
+  }, [actionId]);
+
+  const inverse = 1 - progress;
+  const x = inverse * inverse * trajectory.startX + 2 * inverse * progress * trajectory.controlX + progress * progress * trajectory.endX;
+  const y = inverse * inverse * trajectory.startY + 2 * inverse * progress * trajectory.controlY + progress * progress * trajectory.endY;
+  const tangentX = 2 * inverse * (trajectory.controlX - trajectory.startX) + 2 * progress * (trajectory.endX - trajectory.controlX);
+  const tangentY = 2 * inverse * (trajectory.controlY - trajectory.startY) + 2 * progress * (trajectory.endY - trajectory.controlY);
+  const angle = Math.atan2(tangentY, tangentX) * (180 / Math.PI) + progress * 360;
+
+  return (
+    <g className="pitch-ball" pointerEvents="none" transform={`translate(${x.toFixed(2)} ${y.toFixed(2)}) rotate(${angle.toFixed(2)})`}>
+      <circle cx="0" cy="0" fill="hsl(var(--background))" r="2.15" stroke="currentColor" strokeWidth="0.58" />
+      <path d="M-0.62 -0.82 L0.44 -0.58 L0.76 0.32 L0 0.94 L-0.82 0.38 L-0.62 -0.82Z" fill="currentColor" stroke="currentColor" strokeWidth="0.16" />
+      <path d="M-0.62 -0.82 L-1.48 -0.36 M0.44 -0.58 L1.4 -0.9 M0.76 0.32 L1.48 0.82 M0 0.94 L-0.28 1.7 M-0.82 0.38 L-1.5 0.92" fill="none" stroke="currentColor" strokeLinecap="round" strokeWidth="0.22" />
+    </g>
+  );
 }
 
 function PitchMarkings() {
@@ -228,7 +259,6 @@ export function EngravedPitch({
                 trajectory?.isShot && 'trajectory-shot',
                 trajectory?.isClearance && 'trajectory-clearance',
               )}
-                id={`trajectory-path-${selected.actionId}`}
               markerEnd="url(#vaep-arrow)"
               pathLength={1}
               stroke="currentColor"
@@ -329,21 +359,7 @@ export function EngravedPitch({
             </g>
           );
         })}
-        {selected ? (
-          <g className="pitch-ball" pointerEvents="none">
-            <g className="pitch-ball-motion">
-              <g className="pitch-ball-spin">
-                <circle cx="0" cy="0" fill="hsl(var(--background))" r="2.15" stroke="currentColor" strokeWidth="0.58" />
-                <path d="M-0.62 -0.82 L0.44 -0.58 L0.76 0.32 L0 0.94 L-0.82 0.38 L-0.62 -0.82Z" fill="currentColor" stroke="currentColor" strokeWidth="0.16" />
-                <path d="M-0.62 -0.82 L-1.48 -0.36 M0.44 -0.58 L1.4 -0.9 M0.76 0.32 L1.48 0.82 M0 0.94 L-0.28 1.7 M-0.82 0.38 L-1.5 0.92" fill="none" stroke="currentColor" strokeLinecap="round" strokeWidth="0.22" />
-                <animateTransform attributeName="transform" dur="950ms" fill="freeze" from="rotate(0)" to="rotate(360)" type="rotate" />
-              </g>
-              <animateMotion calcMode="spline" dur="950ms" fill="freeze" keySplines="0.22 1 0.36 1" keyTimes="0;1" rotate="auto">
-                <mpath href={`#trajectory-path-${selected.actionId}`} />
-              </animateMotion>
-            </g>
-          </g>
-        ) : null}
+        {selected && trajectory ? <AnimatedFootball actionId={selected.actionId} key={selected.actionId} trajectory={trajectory} /> : null}
       </svg>
       {teams.length === 2 ? (
         <div aria-label="Team key" className="pitch-team-key">

@@ -51,7 +51,7 @@ This is the visual vocabulary for the tactical replay. The rule is that every ef
 - Carries and dribbles use dotted movement ink without a directional arrow.
 - Dash segments and dot marks use deliberately different lengths and gaps so the two movement languages remain legible at a glance.
 - Arrowheads are rendered at 60% opacity, a 40% fade, while the underlying trajectory keeps its own ink fade.
-- The football references the rendered trajectory path directly with SVG `mpath`, so its launch point, curve, and destination are exactly the same as the arrow's.
+- The football position is calculated from the same Bézier start point, control point, and end point used to draw the arrow, so its launch point, curve, and destination cannot diverge from the arrow's.
 - The football is rendered after player markers in the SVG paint order, so it remains visually on top of the pitch symbols throughout the action.
 - Shots use a heavier, faster-looking stroke and a tighter focus.
 - Clearances use a strong but muted long trajectory.
