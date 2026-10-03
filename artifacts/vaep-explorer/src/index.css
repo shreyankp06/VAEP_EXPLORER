@@ -71,6 +71,10 @@
 :root {
   --blueprint-cobalt: #2238c4;
   --blueprint-ivory: #f7f4ec;
+  --blueprint-text: color-mix(in oklab, var(--blueprint-cobalt) 42%, #0b0b14);
+  --blueprint-soft: color-mix(in oklab, var(--blueprint-text) 74%, var(--blueprint-ivory));
+  --blueprint-line: color-mix(in oklab, var(--blueprint-cobalt) 24%, var(--blueprint-ivory));
+  --blueprint-wash: color-mix(in oklab, var(--blueprint-cobalt) 6%, var(--blueprint-ivory));
   --button-outline: hsl(232 70% 45% / 0.12);
   --badge-outline: hsl(232 70% 45% / 0.08);
   --opaque-button-border-intensity: -8;
@@ -114,9 +118,9 @@
   --chart-4: 232 32% 74%;
   --chart-5: 232 70% 30%;
 
-  --app-font-sans: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  --app-font-serif: 'Palatino Linotype', 'Book Antiqua', Palatino, Georgia, serif;
-  --app-font-body: 'Palatino Linotype', 'Book Antiqua', Palatino, Georgia, serif;
+  --app-font-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+  --app-font-serif: 'Iowan Old Style', Baskerville, 'Libre Baskerville', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, 'Times New Roman', serif;
+  --app-font-body: 'Iowan Old Style', Baskerville, 'Libre Baskerville', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, 'Times New Roman', serif;
   --app-font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   --radius: 0.15rem;
 
@@ -224,6 +228,7 @@
 
   body {
     font-family: var(--app-font-body), Georgia, serif;
+    color: var(--blueprint-text);
     font-weight: 400;
     font-synthesis: none;
     text-rendering: optimizeLegibility;
@@ -276,6 +281,17 @@
     font-family: var(--app-font-serif), Georgia, serif;
     font-synthesis: none;
     text-rendering: optimizeLegibility;
+  }
+
+  .editorial-statement {
+    margin-top: 1.75rem;
+    font-family: var(--app-font-serif), Georgia, serif;
+    font-size: clamp(1.7rem, 3.4vw, 2.875rem);
+    font-weight: 400;
+    line-height: 1.17;
+    letter-spacing: -0.01em;
+    color: var(--blueprint-text);
+    text-wrap: pretty;
   }
 }
 
@@ -368,7 +384,7 @@
     background-image:
       linear-gradient(135deg, hsl(var(--card) / 0.96), hsl(var(--card) / 0.86)),
       repeating-linear-gradient(-35deg, transparent 0 13px, hsl(var(--primary) / 0.035) 13px 14px);
-    box-shadow: inset 0 0 0 1px hsl(var(--background) / 0.45);
+    box-shadow: inset 0 0 0 1px var(--blueprint-line);
   }
 
   .section-heading {
