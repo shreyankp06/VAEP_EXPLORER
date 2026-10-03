@@ -596,8 +596,8 @@
   }
 
   .pitch-team-swatch-away {
-    background: #6374d8;
-    border: 1px dashed hsl(var(--primary) / 0.7);
+    background: hsl(var(--background));
+    border: 1px dashed #6374d8;
   }
 
   .pitch-player-anticipating {

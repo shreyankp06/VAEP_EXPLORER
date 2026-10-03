@@ -9,7 +9,7 @@ This is the visual vocabulary for the tactical replay. The rule is that every ef
 | Solid player circle | Player involved in the current action |
 | Deep cobalt player circle | First team in the match action feed; primary team tone |
 | Ivory player circle with lighter-cobalt dashed outline and blue number | Second team in the match action feed; inverted symbol treatment |
-| Team key below the pitch | Maps the two blue tones to the team names |
+| Team key below the pitch | Maps each team name to its player-symbol treatment |
 | Ring around a player | Active, hovered, or selected player |
 | Expanding receiver ring | The next receiving player is anticipating the ball |
 | Dashed blue ink path | Ball trajectory for a pass or other movement |
