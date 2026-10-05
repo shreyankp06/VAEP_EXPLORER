@@ -53,6 +53,26 @@ For more detail, see [SUPABASE_SETUP.md](SUPABASE_SETUP.md).
 
 ## Install and run
 
+```cmd
+Terminal 1: Database and API Server
+pnpm install --frozen-lockfile && pnpm db:setup && pnpm db:check
+
+Extract DATABASE_URL from .env and set it as a variable
+for /f "tokens=1,* delims==" %i in ('findstr "^DATABASE_URL=" .env') do set "DATABASE_URL=%j"
+
+set PORT=3000
+pnpm --filter @workspace/api-server build
+pnpm --filter @workspace/api-server start
+
+Terminal 2: Frontend Explorer
+set PORT=5173
+set BASE_PATH=/
+set API_URL=http://localhost:3000
+
+pnpm --filter @workspace/vaep-explorer dev
+```
+
+
 ```powershell
 pnpm install --frozen-lockfile
 pnpm db:setup
