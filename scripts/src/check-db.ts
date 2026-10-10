@@ -76,6 +76,46 @@ async function main(): Promise<void> {
     throw new Error("Action data validation failed");
   }
 
+  const goalAudit = await pool.query<{
+    goal_count: string;
+    shootout_goal_count: string;
+    goals_without_possession: string;
+    score_mismatches: string;
+  }>(`
+    with credited_goals as (
+      select
+        match_id,
+        count(*) filter (where goal_team = 'home') as home_goals,
+        count(*) filter (where goal_team = 'away') as away_goals
+      from public.actions
+      where is_goal
+      group by match_id
+    )
+    select
+      (select count(*) from public.actions where is_goal)::text as goal_count,
+      (select count(*) from public.actions where is_goal and period_id = 5)::text as shootout_goal_count,
+      (select count(*) from public.actions where is_goal and possession_id is null)::text as goals_without_possession,
+      (
+        select count(*)
+        from public.matches m
+        left join credited_goals g on g.match_id = m.id
+        where coalesce(g.home_goals, 0) <> m.home_score
+           or coalesce(g.away_goals, 0) <> m.away_score
+      )::text as score_mismatches
+  `);
+  const goals = goalAudit.rows[0];
+  if (
+    !goals ||
+    goals.goal_count !== "172" ||
+    goals.shootout_goal_count !== "0" ||
+    goals.goals_without_possession !== "0" ||
+    goals.score_mismatches !== "0"
+  ) {
+    throw new Error(
+      `Goal data validation failed: ${JSON.stringify(goals)}`,
+    );
+  }
+
   console.table(
     result.rows.map((row) => ({
       table: row.table_name,
@@ -84,6 +124,9 @@ async function main(): Promise<void> {
       publicRead: row.anon_select && row.authenticated_select,
       publicWrite: row.anon_insert || row.authenticated_insert,
     })),
+  );
+  console.log(
+    `Goal annotations: ${goals.goal_count}; shootout goals: ${goals.shootout_goal_count}; goals without possession: ${goals.goals_without_possession}; score mismatches: ${goals.score_mismatches}.`,
   );
 }
 

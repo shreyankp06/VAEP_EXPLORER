@@ -15,23 +15,20 @@ export function Layout({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-[100dvh] text-foreground">
       <header className="border-b border-primary/25 bg-background/90 backdrop-blur-sm">
-        <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-5 md:px-8">
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <Link href="/" className="group">
-              <p className="label-meta">Vol. I · Interactive football archive</p>
-              <p className="font-display text-4xl font-semibold leading-none tracking-tight text-primary md:text-5xl">
+        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-x-6 gap-y-3 px-4 py-3 md:px-8">
+          <div className="flex min-w-0 items-center gap-3 sm:gap-5">
+            <Link href="/" className="group shrink-0">
+              <p className="font-display text-3xl font-semibold leading-none tracking-tight text-primary sm:text-4xl">
                 VAEP <span className="italic font-medium">Explorer</span>
               </p>
-              <p className="mt-2 max-w-md text-sm text-muted-foreground">
-                An interactive archive for valuing football actions by estimating probabilities.
-              </p>
             </Link>
-            <div className="hidden text-right sm:block">
+            <span aria-hidden="true" className="hidden h-9 w-px bg-primary/20 sm:block" />
+            <div className="hidden text-left sm:block">
               <p className="label-meta">Archive status</p>
-              <p className="mt-1 font-sans text-sm text-primary">Live catalogue · 2023/24</p>
+              <p className="mt-1 font-sans text-xs text-primary">Live match archive</p>
             </div>
           </div>
-          <nav aria-label="Primary" className="flex gap-1 overflow-x-auto border-y border-primary/20 py-2">
+          <nav aria-label="Primary" className="flex max-w-full gap-1 overflow-x-auto border-y border-primary/20 py-1 sm:border-y-0 sm:py-0">
             {NAV_ITEMS.map((item) => {
               const active = location === item.href;
               return (
@@ -39,7 +36,7 @@ export function Layout({ children }: { children: ReactNode }) {
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    'shrink-0 px-4 py-2 font-sans text-[0.72rem] font-semibold uppercase tracking-[0.18em] transition-colors',
+                    'shrink-0 px-3 py-2 font-sans text-[0.68rem] font-semibold uppercase tracking-[0.16em] transition-colors sm:px-3',
                     active ? 'text-primary' : 'text-muted-foreground hover:text-primary',
                   )}
                 >

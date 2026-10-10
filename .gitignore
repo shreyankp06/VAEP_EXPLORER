@@ -22,7 +22,17 @@ __pycache__/
 attached_assets/
 data/statsbomb/
 data/seed_data.json
+data/seed_data_64.json
+data/seed_data_64_goals.json
+data/seed_data_64.metadata.json
+data/seed_data_64_models/
+data/validation_report.txt
+data/paper_validation_addendum.txt
 *.log
+
+# Research manuscripts and source papers are maintained outside the application repository.
+/my_research_paper_draft/
+/original_research_paper/
 
 # Replit workspace metadata
 .replit
