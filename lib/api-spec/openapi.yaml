@@ -269,7 +269,7 @@ components:
 
     Action:
       type: object
-      required: [id, actionId, matchId, playerId, playerName, team, periodId, timeSeconds, actionType, result, startX, startY, endX, endY, vaepValue, offensiveValue, defensiveValue]
+      required: [id, actionId, matchId, playerId, playerName, team, periodId, timeSeconds, actionType, result, isGoal, goalTeam, goalScoreHome, goalScoreAway, possessionId, startX, startY, endX, endY, vaepValue, offensiveValue, defensiveValue]
       properties:
         id:
           type: number
@@ -291,6 +291,17 @@ components:
           type: string
         result:
           type: string
+        isGoal:
+          type: boolean
+        goalTeam:
+          type: [string, 'null']
+          enum: [home, away, null]
+        goalScoreHome:
+          type: [number, 'null']
+        goalScoreAway:
+          type: [number, 'null']
+        possessionId:
+          type: [number, 'null']
         startX:
           type: number
         startY:

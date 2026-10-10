@@ -1,5 +1,6 @@
 import { relations, sql } from "drizzle-orm";
 import {
+	boolean,
 	check,
 	index,
 	integer,
@@ -56,6 +57,11 @@ export const actions = pgTable(
 		timeSeconds: real("time_seconds").notNull(),
 		actionType: text("action_type").notNull(),
 		result: text("result").notNull(),
+		isGoal: boolean("is_goal").notNull().default(false),
+		goalTeam: text("goal_team"),
+		goalScoreHome: integer("goal_score_home"),
+		goalScoreAway: integer("goal_score_away"),
+		possessionId: integer("possession_id"),
 		startX: real("start_x").notNull(),
 		startY: real("start_y").notNull(),
 		endX: real("end_x").notNull(),

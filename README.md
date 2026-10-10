@@ -7,12 +7,13 @@ The current implementation is the MVP described in the project SRS: React/Vite f
 ## Implemented
 
 - Dashboard with dataset totals, top players, action-type contribution, and recent actions
-- Match action replay with play, pause, step, scrub, and speed controls
+- Match action replay with play, pause, step, scrub, speed controls, goal cards, score-after, same-possession buildup, and shot context
 - Sortable and filterable VAEP leaderboard
 - Interactive quality-versus-quantity scatter plot
 - Read-only REST API with an OpenAPI contract and generated TypeScript clients
 - Supabase-compatible PostgreSQL schema with RLS and read-only public policies
 - StatsBomb-to-SPADL/VAEP Python pipeline and idempotent seed importer
+- Plain-language match interpretation and model-validation reporting
 - Responsive navigation, loading states, empty states, and API error states
 
 The SRS marks the shot rewinder and full league/team/player explorer as lower-priority follow-on modules. Their status and the exact requirement mapping are recorded in [docs/REQUIREMENTS_TRACEABILITY.md](docs/REQUIREMENTS_TRACEABILITY.md).
@@ -53,26 +54,6 @@ For more detail, see [SUPABASE_SETUP.md](SUPABASE_SETUP.md).
 
 ## Install and run
 
-```cmd
-Terminal 1: Database and API Server
-pnpm install --frozen-lockfile && pnpm db:setup && pnpm db:check
-
-Extract DATABASE_URL from .env and set it as a variable
-for /f "tokens=1,* delims==" %i in ('findstr "^DATABASE_URL=" .env') do set "DATABASE_URL=%j"
-
-set PORT=3000
-pnpm --filter @workspace/api-server build
-pnpm --filter @workspace/api-server start
-
-Terminal 2: Frontend Explorer
-set PORT=5173
-set BASE_PATH=/
-set API_URL=http://localhost:3000
-
-pnpm --filter @workspace/vaep-explorer dev
-```
-
-
 ```powershell
 pnpm install --frozen-lockfile
 pnpm db:setup
@@ -97,18 +78,33 @@ Open `http://localhost:5173`.
 
 ## Load real data
 
-Download StatsBomb Open Data into `data/statsbomb`, install the pipeline dependencies, and generate the seed file:
+The current research build uses 64 FIFA World Cup 2022 matches from the free StatsBomb Open Data repository (competition 43, season 106). The 64-match seed is `data/seed_data_64.json`; the older 12-match demo seed remains `data/seed_data.json`. See [Research data, model and validation](docs/RESEARCH_AND_DATA.md) for coverage, metrics, and limitations.
+
+To rebuild the 64-match seed locally, download StatsBomb Open Data, install the pipeline dependencies, and use the explicit 64-match output:
 
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install -r pipeline\requirements.txt
-python pipeline\download_statsbomb.py --data-root data\statsbomb --competition-id 43 --season-id 106 --max-matches 12
-python pipeline\run_vaep.py --data-root data\statsbomb --competition-id 43 --season-id 106 --max-matches 12 --output data\seed_data.json
+python pipeline\download_statsbomb.py --data-root data\statsbomb --competition-id 43 --season-id 106 --max-matches 64
+python pipeline\run_vaep.py --data-root data\statsbomb --competition-id 43 --season-id 106 --max-matches 64 --output data\seed_data_64.json
+$env:SEED_FILE = "data/seed_data_64.json"
 pnpm --filter @workspace/scripts seed
+Remove-Item Env:SEED_FILE
 ```
 
-The raw dataset and generated seed file are intentionally ignored by Git. See [pipeline/README.md](pipeline/README.md) for the expected StatsBomb folder structure and attribution note.
+The raw dataset and generated seed file are intentionally ignored by Git. The seeder writes to the database configured in `.env`; do not run it unless that target is the intended project. See [pipeline/README.md](pipeline/README.md) for validation commands, the expected StatsBomb folder structure, shootout handling, and attribution note.
+
+To enrich an existing seed with goal and possession facts **without training models or recalculating VAEP**, follow [pipeline/README.md](pipeline/README.md). For an existing database, run [the goal-story migration](supabase/migrations/20261010_goal_story.sql) in Supabase SQL Editor, then import the enriched seed:
+
+```powershell
+$env:SEED_FILE = "data/seed_data_64_goals.json"
+pnpm --filter @workspace/scripts seed
+Remove-Item Env:SEED_FILE
+pnpm db:check
+```
+
+The seed importer upserts the existing records; it does not create another dataset or recalculate VAEP. Point `.env` at the intended Supabase project before running it. The current deployment has the migration and enriched seed applied; `pnpm db:check` verifies goal totals and score reconciliation.
 
 ## Quality checks
 
@@ -139,6 +135,7 @@ The full contract is in [lib/api-spec/openapi.yaml](lib/api-spec/openapi.yaml).
 - [Architecture](ARCHITECTURE.md)
 - [Supabase setup](SUPABASE_SETUP.md)
 - [Data pipeline](pipeline/README.md)
+- [Research data, model and validation](docs/RESEARCH_AND_DATA.md)
 
 ## License
 

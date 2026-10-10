@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { Action } from '@workspace/api-client-react';
 import { playerAbbr, shirtNumber } from '@/lib/format';
-import { PITCH_HEIGHT, PITCH_WIDTH, teamInk } from '@/lib/vaep';
+import { PITCH_HEIGHT, PITCH_WIDTH } from '@/lib/vaep';
 import { cn } from '@/lib/utils';
 
 type Marker = {
@@ -73,7 +73,7 @@ function trajectoryFor(action: Action) {
   const isCarry = type.includes('dribble') || type.includes('carry') || type.includes('run');
   const isShot = type.includes('shot');
   const isClearance = type.includes('clearance');
-  const isGoal = action.result.toLowerCase() === 'goal';
+  const isGoal = action.isGoal || action.result.toLowerCase() === 'goal';
   const isInterruption = ['foul', 'throw in', 'corner', 'free kick', 'goal kick', 'offside'].some((name) => type.includes(name));
   const isLong = distance > 25 || isCross;
   const bend = isCross ? 0.24 : isThroughBall ? 0.15 : isLong ? 0.1 : 0.035;
@@ -94,9 +94,12 @@ function cameraBox(action?: Action, trajectory?: ReturnType<typeof trajectoryFor
   return `${x.toFixed(2)} ${y.toFixed(2)} ${width + 8} ${height + 8}`;
 }
 
-function teamTone(team: string, actions: Action[]) {
-  const teams = [...new Set(actions.map((action) => action.team))];
-  return teams.indexOf(team) === 1 ? 'away' : 'home';
+function teamTone(team: string, homeTeam: string | undefined) {
+  return team !== homeTeam ? 'away' : 'home';
+}
+
+function teamColor(team: string, homeTeam: string | undefined) {
+  return teamTone(team, homeTeam) === 'away' ? '#2563eb' : '#e4572e';
 }
 
 function parseViewBox(viewBox: string) {
@@ -175,6 +178,7 @@ export function MiniPitch({ action, className }: { action: Action; className?: s
 export function EngravedPitch({
   actions,
   selected,
+  homeTeam,
   hoveredPlayerId,
   onSelectAction,
   onHoverPlayer,
@@ -182,6 +186,7 @@ export function EngravedPitch({
 }: {
   actions: Action[];
   selected?: Action;
+  homeTeam?: string;
   hoveredPlayerId?: number | null;
   onSelectAction?: (actionId: number) => void;
   onHoverPlayer?: (playerId: number | null) => void;
@@ -292,14 +297,14 @@ export function EngravedPitch({
           </g>
         ) : null}
         {markers.map((marker) => {
-          const tone = teamTone(marker.team, actions);
+          const tone = teamTone(marker.team, homeTeam);
           const active = selected?.playerId === marker.playerId || hoveredPlayerId === marker.playerId;
           const faded = dim && hoveredPlayerId !== marker.playerId && selected?.playerId !== marker.playerId;
           return (
             <g
               key={marker.playerId}
               aria-label={`${marker.name}${marker.isPartner ? ', receiving player' : ''}`}
-              className={cn('pitch-player cursor-pointer', `pitch-team-${teamTone(marker.team, actions)}`, marker.isPartner && 'pitch-player-partner pitch-player-anticipating', selected?.playerId === marker.playerId && 'pitch-player-actor')}
+              className={cn('pitch-player cursor-pointer', `pitch-team-${tone}`, marker.isPartner && 'pitch-player-partner pitch-player-anticipating', selected?.playerId === marker.playerId && 'pitch-player-actor')}
               onClick={() => {
                 setPinnedPlayerId((current) => current === marker.playerId ? null : marker.playerId);
                 const related = [...actions].reverse().find((action) => action.playerId === marker.playerId);
@@ -310,17 +315,29 @@ export function EngravedPitch({
               opacity={faded ? 0.28 : 1}
             >
               {active || marker.isPartner ? <circle className={cn('pitch-marker-halo', marker.isPartner && 'pitch-receiver-ring')} cx={marker.x} cy={marker.y} fill="none" r="4.2" stroke="currentColor" strokeWidth="0.35" /> : null}
-              <circle
-                cx={marker.x}
-                cy={marker.y}
-                fill={tone === 'away' ? 'hsl(var(--background))' : teamInk(marker.team)}
-                r={active ? 3.15 : 2.7}
-                stroke={tone === 'away' ? '#6374d8' : 'hsl(var(--background))'}
-                strokeWidth={tone === 'away' ? '0.65' : '0.45'}
-                strokeDasharray={tone === 'away' ? '1.8 1.4' : undefined}
-              />
+              {tone === 'away' ? (
+                <rect
+                  x={marker.x - (active ? 2.8 : 2.4)}
+                  y={marker.y - (active ? 2.8 : 2.4)}
+                  width={active ? 5.6 : 4.8}
+                  height={active ? 5.6 : 4.8}
+                  rx="0.6"
+                  fill={teamColor(marker.team, homeTeam)}
+                  stroke="hsl(var(--background))"
+                  strokeWidth="0.6"
+                />
+              ) : (
+                <circle
+                  cx={marker.x}
+                  cy={marker.y}
+                  fill={teamColor(marker.team, homeTeam)}
+                  r={active ? 3.15 : 2.7}
+                  stroke="hsl(var(--background))"
+                  strokeWidth="0.6"
+                />
+              )}
               <text
-                fill={tone === 'away' ? '#6374d8' : 'hsl(var(--primary-foreground))'}
+                fill="white"
                 fontFamily="Geist, system-ui, sans-serif"
                 fontSize="2.4"
                 fontWeight="600"

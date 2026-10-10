@@ -19,6 +19,11 @@ const actionResponse = (row: {
   timeSeconds: number;
   actionType: string;
   result: string;
+  isGoal: boolean;
+  goalTeam: string | null;
+  goalScoreHome: number | null;
+  goalScoreAway: number | null;
+  possessionId: number | null;
   startX: number;
   startY: number;
   endX: number;
@@ -37,6 +42,11 @@ const actionResponse = (row: {
   timeSeconds: row.timeSeconds,
   actionType: row.actionType,
   result: row.result,
+  isGoal: row.isGoal,
+  goalTeam: row.goalTeam,
+  goalScoreHome: row.goalScoreHome,
+  goalScoreAway: row.goalScoreAway,
+  possessionId: row.possessionId,
   startX: row.startX,
   startY: row.startY,
   endX: row.endX,
@@ -74,6 +84,11 @@ router.get("/matches/:matchId/actions", async (request, response, next) => {
         timeSeconds: actions.timeSeconds,
         actionType: actions.actionType,
         result: actions.result,
+        isGoal: actions.isGoal,
+        goalTeam: actions.goalTeam,
+        goalScoreHome: actions.goalScoreHome,
+        goalScoreAway: actions.goalScoreAway,
+        possessionId: actions.possessionId,
         startX: actions.startX,
         startY: actions.startY,
         endX: actions.endX,
@@ -186,6 +201,11 @@ router.get("/players/:playerId/actions", async (request, response, next) => {
         timeSeconds: actions.timeSeconds,
         actionType: actions.actionType,
         result: actions.result,
+        isGoal: actions.isGoal,
+        goalTeam: actions.goalTeam,
+        goalScoreHome: actions.goalScoreHome,
+        goalScoreAway: actions.goalScoreAway,
+        possessionId: actions.possessionId,
         startX: actions.startX,
         startY: actions.startY,
         endX: actions.endX,

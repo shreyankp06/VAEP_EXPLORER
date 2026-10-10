@@ -35,6 +35,11 @@ export interface Action {
   timeSeconds: number;
   actionType: string;
   result: string;
+  isGoal: boolean;
+  goalTeam: 'home' | 'away' | null;
+  goalScoreHome: number | null;
+  goalScoreAway: number | null;
+  possessionId: number | null;
   startX: number;
   startY: number;
   endX: number;
@@ -126,4 +131,3 @@ team?: string;
 position?: string;
 minActions?: number;
 };
-
