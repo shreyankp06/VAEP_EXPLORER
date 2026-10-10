@@ -1,17 +1,18 @@
 # VAEP Explorer — Architecture Overview
 
-> **Status:** Implemented MVP. Last reconciled with the supplied SRS on September 20, 2026.
+> **Status:** Implemented research explorer. Last updated October 10, 2026.
 
 ---
 
 ## 1. What Are We Building?
 
-**VAEP Explorer** is an interactive football analytics dashboard that lets users visually explore player action values computed using the VAEP (Valuing Actions by Estimating Probabilities) model. It uses *precomputed* data — no ML training happens in this project.
+**VAEP Explorer** is an interactive football analytics application for exploring action-level VAEP (Valuing Actions by Estimating Probabilities). A separate offline Python pipeline converts StatsBomb events to SPADL, trains scoring and conceding classifiers, computes action values, and exports a seed. The running web application serves those stored values; it does not train models or recalculate VAEP at request time.
 
 **Prototype Modules:**
-1. **Action Replay** — animated pitch showing action sequences with VAEP values
-2. **VAEP Leaderboard** — ranked table of players by cumulative VAEP score
-3. **Quality vs Quantity Scatter Plot** — VAEP per action vs total actions per player
+1. **Match report and replay** — score, distinct home/away player markers, action playback, shot context, and a selective match-story timeline
+2. **Key moments, activity, actions, players, and comparisons** — match-scoped exploration with plain-language interpretation
+3. **VAEP Leaderboard** — ranked table of players by cumulative VAEP score
+4. **Quality vs Quantity Scatter Plot** — VAEP per action vs total actions per player
 
 The SRS also describes a Shot Rewinder and a full League Explorer. Those are lower-priority follow-on modules and are tracked in `docs/REQUIREMENTS_TRACEABILITY.md`; they are not presented as completed features.
 
@@ -26,9 +27,10 @@ The SRS also describes a Shot Rewinder and a full League Explorer. Those are low
 │  StatsBomb Open Data  →  socceraction Python  →  SPADL Actions      │
 │         (raw JSON)          (conversion)         (structured)       │
 │                                ↓                                    │
-│                     VAEP Computation (precomputed)                  │
+│              CatBoost score/concede models + VAEP                  │
+│     (goal/possession facts are a separate enrichment step)          │
 │                                ↓                                    │
-│               seed_data.json  →  Seeding Script                     │
+│ enriched seed + metadata + models → Seeding Script                  │
 └───────────────────────────────┬─────────────────────────────────────┘
                                 ↓
 ┌───────────────────────────────────────────────────────────────────┐
@@ -36,7 +38,7 @@ The SRS also describes a Shot Rewinder and a full League Explorer. Those are low
 │                                                                   │
 │  PostgreSQL (Drizzle ORM)  ←→  REST API Routes  ←→  Zod Schemas  │
 │  - matches, players, teams                                        │
-│  - actions (with VAEP values)                                     │
+│  - actions (VAEP + goal/score/possession facts)                   │
 │  - player_stats (aggregated)                                      │
 └───────────────────────────────┬───────────────────────────────────┘
                                 ↓ /api/*
@@ -51,6 +53,8 @@ The SRS also describes a Shot Rewinder and a full League Explorer. Those are low
 ```
 
 **Key principle:** The data pipeline (Python + socceraction) is a *one-time offline step* that produces JSON files. The app itself is a standard fullstack web app — React frontend + Express backend + PostgreSQL.
+
+For the current deployment's specific data counts, model settings, validation metrics, shootout treatment, and research limitations, see [`docs/RESEARCH_AND_DATA.md`](docs/RESEARCH_AND_DATA.md).
 
 ---
 
@@ -95,10 +99,15 @@ actions
   action_id         integer
   match_id          integer → matches.id
   player_id         integer → players.id
-  period_id         integer          (1 or 2)
+  period_id         integer          (1–5; period 5 is penalty shootout)
   time_seconds      real
   action_type       text             (pass, shot, dribble, tackle, …)
   result            text             (success, fail)
+  is_goal           boolean
+  goal_team         text             (home, away; credited scoring side)
+  goal_score_home   integer          (score immediately after goal)
+  goal_score_away   integer
+  possession_id     integer          (StatsBomb event possession)
   start_x           real             (0–105 metres)
   start_y           real             (0–68 metres)
   end_x             real
@@ -150,14 +159,13 @@ GET  /api/stats/action-type-breakdown      → action types grouped by VAEP cont
 ```
 App
 ├── Layout
-│   ├── Sidebar (navigation links + team branding)
-│   └── TopBar (page title + search)
+│   ├── Primary navigation (Match report, Atlas, Players, Quality)
+│   └── Responsive page shell
 │
-├── /dashboard         → overview stats, top 5 leaderboard widget, recent actions feed
-├── /replay            → match selector → pitch animation + action list + VAEP panel
-├── /leaderboard       → sortable table of all players with VAEP metrics
-├── /scatter           → interactive Recharts scatter plot (quality vs quantity)
-└── /players/:id       → player detail page (stats + their top actions)
+├── / and /replay      → match archive, replay, pitch, inspector, and match-story timeline
+├── /atlas             → dashboard overview
+├── /leaderboard       → sortable player VAEP table
+└── /scatter           → interactive quality-versus-quantity chart
 ```
 
 ---
@@ -165,14 +173,17 @@ App
 ## 7. Component Hierarchy (Prototype)
 
 ```
-ActionReplayPage
-├── MatchSelector (dropdown)
-├── FootballPitch (SVG — 105×68m coordinate system)
-│   ├── ActionArrow (animated arrow per action)
-│   └── PlayerDot
-├── ActionTimeline (horizontal scrubber)
-├── ActionControls (play / pause / step / speed)
-└── VAEPInfoPanel (action type, result, VAEP breakdown)
+ReplayPage
+├── MatchHero + plain-language introduction
+├── MatchSectionNavigation
+├── InteractivePitch
+│   ├── home/away markers with distinct colors and shapes
+│   ├── selected action path and receiver context
+│   ├── goal cards, score-after, and same-possession buildup
+│   ├── playback controls and non-goal shot context
+│   └── ActionInspector (stored VAEP parts; no reconstructed probabilities)
+├── SelectiveKeyActionTimeline (shots, cards, substitutions, high VAEP changes)
+└── KeyMoments / TeamActivity / AllActions / Players / Compare / Sequences
 
 LeaderboardPage
 ├── SortControls
@@ -211,22 +222,41 @@ DashboardPage
 ## 9. Data Flow: StatsBomb → Frontend
 
 ```
-1. OFFLINE (Python, run once):
+1. OFFLINE (Python, explicit research refresh):
    StatsBomb JSON files
    → socceraction: parse into SPADL format (standardized action columns)
-   → VAEP scores computed per action
-   → Export: seed_data.json (matches, players, actions, player_stats)
+   → CatBoost scoring/conceding models fit on standard-play actions
+   → VAEP values computed
+   → shootout rows retained with zero VAEP
+   → Export: seed_data_64.json, metadata, and model artifacts
 
-2. SEEDING (Node.js script, run once):
-   seed_data.json → parse → Drizzle INSERT → PostgreSQL tables
+2. ENRICH (Python, when adding goal stories to an existing seed):
+   Existing seed + corresponding StatsBomb events
+   → join regular-play goal and possession facts by source event ID
+   → verify goals reconcile with each match's final score
+   → Export: seed_data_64_goals.json; preserve VAEP and player aggregates
+
+3. SEEDING (Node.js script):
+   selected seed JSON → parse → transactional Drizzle upsert → PostgreSQL tables
 
 3. RUNTIME (every request):
-   User opens /leaderboard
-   → React Query calls useGetLeaderboard()
-   → GET /api/leaderboard
-   → Express handler → Drizzle SELECT from player_stats → JSON response
-   → React renders LeaderboardTable with real data
+   User selects a match
+   → React Query requests GET /api/matches/{matchId}/actions
+   → Express handler → Drizzle SELECT from actions and players
+   → React formats period-relative seconds as a continuous match clock
+   → replay renders goals, score-after, same-possession buildup, and stored VAEP
 ```
+
+The action API stores VAEP components, not per-action probabilities before and
+after each event. The UI therefore presents stored value components and their
+plain-language meaning rather than reconstructing probability percentages.
+Goal facts are taken from StatsBomb outcomes (including own goals) and
+reconciled to the match's final score. Possession IDs constrain the buildup
+shown to fans; the sequence is event-feed context, not proof of causation.
+The goal-story enrichment does not refit models or recalculate VAEP. Existing
+databases need the goal-story migration before importing an enriched seed; the
+current Supabase deployment has the migration and enriched seed applied and
+passes the goal-count and final-score audit.
 
 ---
 
@@ -236,24 +266,14 @@ DashboardPage
 artifacts/
 ├── api-server/src/
 │   ├── routes/
-│   │   ├── matches.ts         (match list + match actions)
-│   │   ├── leaderboard.ts
-│   │   ├── players.ts
-│   │   ├── scatter.ts
-│   │   └── stats.ts           (dashboard aggregates)
+│   │   ├── data.ts            (matches, actions, players, leaderboard, stats)
+│   │   └── health.ts
 │   └── app.ts
 ├── vaep-explorer/src/          (React + Vite application)
-│   ├── pages/
-│   │   ├── DashboardPage.tsx
-│   │   ├── ReplayPage.tsx
-│   │   ├── LeaderboardPage.tsx
-│   │   └── ScatterPage.tsx
-│   ├── components/
-│   │   ├── layout/            (Sidebar, TopBar, Layout)
-│   │   ├── pitch/             (FootballPitch, ActionArrow)
-│   │   ├── charts/            (VAEPScatterChart, ActionTypeChart)
-│   │   └── ui/                (shadcn components)
-│   ├── hooks/                 (useReplayControls, usePlayerFilter)
+│   ├── pages/                  (dashboard, leaderboard, replay, scatter)
+│   ├── components/             (layout, pitch, charts, shared UI)
+│   ├── hooks/api/useMatches.ts (match/action queries and match-clock normalization)
+│   ├── lib/                    (formatting and VAEP presentation helpers)
 │   └── App.tsx
 
 lib/
@@ -306,4 +326,4 @@ lib/
 
 ---
 
-For setup and operating instructions, start with `README.md`. For the exact SRS coverage, see `docs/REQUIREMENTS_TRACEABILITY.md`.
+For setup and operating instructions, start with `README.md`. For the exact SRS coverage, see `docs/REQUIREMENTS_TRACEABILITY.md`; for dataset/model/validation details, see `docs/RESEARCH_AND_DATA.md`.

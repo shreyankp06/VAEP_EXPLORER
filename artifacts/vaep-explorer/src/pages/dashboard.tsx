@@ -6,7 +6,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useGetActionTypeBreakdown, useGetStatsOverview, useGetTopPlayers } from '@/hooks/api/useStats';
 import { useGetMatchActions, useListMatches } from '@/hooks/api/useMatches';
-import { formatNumber, formatSignedVaep, formatTime, formatVaep, titleCase } from '@/lib/format';
+import { formatActionTime, formatNumber, formatSignedVaep, formatVaep, titleCase } from '@/lib/format';
 
 const actionChartConfig = {
   totalVaep: { label: 'Total VAEP', color: 'hsl(var(--primary))' },
@@ -146,7 +146,7 @@ export default function DashboardPage() {
           <div className="space-y-4">
             {actions.map((action) => (
               <div className="border-b border-primary/15 pb-4 last:border-0 last:pb-0" key={action.id}>
-                <p className="label-meta">{formatTime(action.timeSeconds)} · {action.team}</p>
+                <p className="label-meta">{formatActionTime(action.periodId, action.timeSeconds)} · {action.team}</p>
                 <p className="font-display text-xl">{action.playerName}</p>
                 <p className="text-sm text-muted-foreground">{titleCase(action.actionType)}</p>
                 <p className="mt-1 font-display text-2xl text-primary">{formatSignedVaep(action.vaepValue)}</p>

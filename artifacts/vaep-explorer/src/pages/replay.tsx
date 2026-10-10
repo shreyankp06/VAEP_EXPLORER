@@ -4,25 +4,49 @@ import type { Action, Match } from '@workspace/api-client-react';
 
 import { CatalogSelect, CardGlyph, EngravedFootball, GoalGlyph, PaperPanel, SectionHeading, ShotGlyph, SubGlyph, VaepGlyph } from '@/components/archive/Ornaments';
 import { EngravedPitch, MiniPitch, type PlayerPitchDetail } from '@/components/pitch/EngravedPitch';
+import { KeyMoments, OnBallActivity, PlayerComparison } from '@/components/pitch/MatchInsights';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Slider } from '@/components/ui/slider';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useGetMatchActions, useListMatches } from '@/hooks/api/useMatches';
-import { formatPercent, formatSignedVaep, formatTime, titleCase } from '@/lib/format';
+import { formatActionTime, formatSignedVaep, titleCase } from '@/lib/format';
 import { matchCompetition, matchSeason } from '@/lib/matchMeta';
 import { cn } from '@/lib/utils';
-import { aggregatePlayers, buildSequences, deriveProbabilities, pitchZone } from '@/lib/vaep';
+import { aggregatePlayers, buildSequences, pitchZone } from '@/lib/vaep';
 
-const SECTIONS = ['Overview', 'Timeline', 'Actions', 'Players', 'Sequences', 'VAEP'] as const;
+const SECTIONS = ['Overview', 'Timeline', 'Moments', 'Activity', 'Actions', 'Players', 'Compare', 'Sequences', 'VAEP'] as const;
 type Section = (typeof SECTIONS)[number];
+const SECTION_LABELS: Record<Section, string> = {
+  Overview: 'Match report',
+  Timeline: 'Match story',
+  Moments: 'Key moments',
+  Activity: 'Team activity',
+  Actions: 'All actions',
+  Players: 'Players',
+  Compare: 'Compare players',
+  Sequences: 'Play sequences',
+  VAEP: 'Model details',
+};
 
-function TimelineGlyph({ type, result }: { type: string; result: string }) {
-  if (result === 'goal') return <GoalGlyph className="h-4 w-4" />;
+function TimelineGlyph({ type, result, isGoal }: { type: string; result: string; isGoal?: boolean }) {
+  if (isGoal || result === 'goal') return <GoalGlyph className="h-4 w-4" />;
   if (type.includes('shot')) return <ShotGlyph className="h-4 w-4" />;
   if (type.includes('card')) return <CardGlyph className="h-4 w-4" />;
   if (type.includes('sub')) return <SubGlyph className="h-4 w-4" />;
   return <VaepGlyph className="h-4 w-4" />;
+}
+
+function isTimelineEvent(action: Action) {
+  const type = action.actionType.toLowerCase().replace(/[-_]/g, ' ');
+  return action.periodId !== 5 && (
+    type.includes('shot')
+    || type.includes('card')
+    || type.includes('sub')
+    || action.isGoal
+    || action.result.toLowerCase() === 'goal'
+    || Math.abs(action.vaepValue) >= 0.15
+  );
 }
 
 function actionIntensity(action: Action) {
@@ -30,14 +54,14 @@ function actionIntensity(action: Action) {
   const attackingProgress = Math.max(0, Math.min(1, action.endX / 105));
   const value = Math.min(1, 0.18 + Math.abs(action.vaepValue) * 2.4 + attackingProgress * 0.18
     + (type.includes('shot') ? 0.28 : 0)
-    + (action.result.toLowerCase() === 'goal' ? 0.42 : 0));
+    + (action.isGoal || action.result.toLowerCase() === 'goal' ? 0.42 : 0));
   return Math.round(value * 12);
 }
 
 function replayPauseFor(action: Action) {
   const type = action.actionType.toLowerCase().replace(/[-_]/g, ' ');
   const result = action.result.toLowerCase();
-  if (result === 'goal') return 1100;
+  if (action.isGoal || result === 'goal') return 1100;
   if (type.includes('shot')) return 650;
   if (['foul', 'throw in', 'corner', 'free kick', 'goal kick', 'offside'].some((name) => type.includes(name))) return 800;
   if (Math.abs(action.vaepValue) >= 0.08) return 450;
@@ -61,8 +85,8 @@ function IntensityMeter({ action }: { action: Action }) {
 
 function ReplayLegend({ teams }: { teams: string[] }) {
   const legendItems = [
-    { mark: <span className="replay-legend-marker replay-legend-home" />, label: teams[0] ?? 'Team one' },
-    { mark: <span className="replay-legend-marker replay-legend-away" />, label: teams[1] ?? 'Team two' },
+    { mark: <span className="replay-legend-marker replay-legend-home" />, label: `${teams[0] ?? 'Home'} · Home` },
+    { mark: <span className="replay-legend-marker replay-legend-away" />, label: `${teams[1] ?? 'Away'} · Away` },
     { mark: <span className="replay-legend-ring replay-legend-ring-receiver" />, label: 'Next receiver' },
     { mark: <span className="replay-legend-line replay-legend-line-pass" />, label: 'Pass / cross / through ball' },
     { mark: <span className="replay-legend-line replay-legend-line-carry" />, label: 'Carry / dribble' },
@@ -90,71 +114,260 @@ function ReplayLegend({ teams }: { teams: string[] }) {
   );
 }
 
-function MatchHero({ match, matches, matchId, onMatchChange }: {
-  match?: Match;
-  matches: Match[];
-  matchId?: number;
-  onMatchChange: (id: number) => void;
+function ShotContext({ action, actions, onSelectAction }: {
+  action: Action;
+  actions: Action[];
+  onSelectAction: (actionId: number) => void;
 }) {
+  const isShot = action.actionType.toLowerCase().includes('shot') && action.periodId !== 5 && !action.isGoal;
+  if (!isShot) return null;
+
+  const index = actions.findIndex((item) => item.actionId === action.actionId);
+  const context = actions.slice(Math.max(0, index - 9), index + 1);
   return (
-    <PaperPanel className="match-hero overflow-hidden p-0">
-      <div className="grid items-center gap-8 p-5 md:p-8 lg:grid-cols-[1fr_auto] lg:p-10">
-        <div>
-          <div className="flex flex-wrap items-center gap-3">
-            <p className="label-meta">Match report · plate {String(matchId ?? 1).padStart(3, '0')}</p>
-            <span className="h-px w-12 bg-primary/30" />
-            <span className="font-sans text-[0.65rem] uppercase tracking-[0.22em] text-secondary">90 minutes catalogued</span>
-          </div>
-          <p className="mt-2 font-sans text-sm text-muted-foreground">
-            {match ? `${matchCompetition(match)} · ${matchSeason(match)}` : 'Select a fixture from the catalogue'}
-          </p>
-          {match ? (
-            <>
-              <div className="mt-6 grid grid-cols-[1fr_auto_1fr] items-center gap-4">
-                <h1 className="font-display text-right text-4xl font-semibold leading-none tracking-tight text-primary sm:text-5xl md:text-6xl">
-                  {match.homeTeam}
-                </h1>
-                <p className="font-display text-4xl font-medium tabular-nums text-foreground sm:text-5xl md:text-6xl">
-                  {match.homeScore} — {match.awayScore}
-                </p>
-                <h1 className="font-display text-4xl font-semibold leading-none tracking-tight text-primary sm:text-5xl md:text-6xl">
-                  {match.awayTeam}
-                </h1>
-              </div>
-            </>
-          ) : (
-            <h1 className="font-display mt-4 text-4xl text-primary">No fixture selected</h1>
-          )}
-          <div className="mt-7 max-w-sm">
-            <CatalogSelect
-              aria-label="Select match"
-              label="Catalogue"
-              onChange={(event) => onMatchChange(Number(event.target.value))}
-              value={matchId ?? ''}
+    <PaperPanel className="mt-4">
+      <SectionHeading kicker="Understand the play" title="Actions before this shot" />
+      <p className="mb-4 text-sm leading-relaxed text-muted-foreground">
+        Follow the selected shot and up to nine recorded actions before it. The feed can include stoppages or changes of possession, so this is context—not proof that every action built the shot.
+      </p>
+      <ol className="grid gap-2 sm:grid-cols-2">
+        {context.map((item, itemIndex) => (
+          <li key={item.id}>
+            <button
+              aria-current={item.actionId === action.actionId ? 'step' : undefined}
+              className={cn(
+                'flex w-full items-center gap-3 border p-3 text-left transition-colors hover:bg-accent/50',
+                item.actionId === action.actionId ? 'border-primary bg-primary/5' : 'border-primary/15',
+              )}
+              onClick={() => onSelectAction(item.actionId)}
+              type="button"
             >
-              {matches.map((item) => (
-                <option key={item.matchId} value={item.matchId}>
-                  {item.homeTeam} {item.homeScore}–{item.awayScore} {item.awayTeam} · {matchCompetition(item)}
-                </option>
-              ))}
-            </CatalogSelect>
-          </div>
-        </div>
-        <div className="relative hidden lg:block">
-          <span className="absolute -inset-5 rounded-full border border-dashed border-primary/20" />
-          <EngravedFootball className="relative mx-auto h-44 w-44 opacity-80 xl:h-56 xl:w-56" />
-        </div>
-      </div>
-      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-primary/20 bg-primary/[0.035] px-5 py-3 md:px-8">
-        <p className="label-meta">Home advantage · {match ? `${match.homeTeam} / ${match.awayTeam}` : 'select a fixture'}</p>
-        <p className="font-sans text-xs uppercase tracking-[0.18em] text-muted-foreground">Select a match from the catalogue to begin</p>
-      </div>
+              <span className="font-sans text-xs tabular-nums text-muted-foreground">{String(itemIndex + 1).padStart(2, '0')}</span>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-sm font-medium">{item.playerName}</span>
+                <span className="block truncate text-xs text-muted-foreground">{item.team} · {titleCase(item.actionType)}</span>
+              </span>
+              <span className="shrink-0 text-right">
+                <span className="block font-sans text-xs tabular-nums">{formatActionTime(item.periodId, item.timeSeconds)}</span>
+                <span className="block font-sans text-[0.65rem] tabular-nums text-primary">{formatSignedVaep(item.vaepValue)}</span>
+              </span>
+            </button>
+          </li>
+        ))}
+      </ol>
     </PaperPanel>
   );
 }
 
+function GoalBuildUp({ action, actions, teams }: {
+  action: Action;
+  actions: Action[];
+  teams: string[];
+}) {
+  if (!action.isGoal) return null;
+
+  const goalTeam = action.goalTeam === 'home' ? teams[0] : teams[1];
+  const ownGoal = action.result.toLowerCase() === 'owngoal';
+  const samePossession = action.possessionId === null
+    ? []
+    : actions.filter((item) => item.periodId === action.periodId
+      && item.possessionId === action.possessionId
+      && (item.timeSeconds < action.timeSeconds
+        || (item.timeSeconds === action.timeSeconds && item.actionId <= action.actionId)));
+  const goalIndex = samePossession.findIndex((item) => item.actionId === action.actionId);
+  const buildup = goalIndex >= 0 ? samePossession.slice(Math.max(0, goalIndex - 9), goalIndex + 1) : [];
+
+  return (
+    <PaperPanel className="mt-4">
+      <SectionHeading kicker="The moment that changed the score" title="How the goal happened" />
+      <div className="mb-4 flex flex-wrap items-baseline justify-between gap-2 border-l-4 border-amber-500 bg-amber-500/10 px-4 py-3">
+        <p className="font-display text-xl text-foreground">
+          GOAL · {action.playerName}{ownGoal ? ' (own goal)' : ''} · {goalTeam}
+        </p>
+        <p className="font-display text-2xl tabular-nums text-primary">
+          {action.goalScoreHome}–{action.goalScoreAway}
+        </p>
+        <p className="w-full text-xs text-muted-foreground">
+          {formatActionTime(action.periodId, action.timeSeconds)}
+          {!ownGoal ? ` · Finish model estimate ${formatSignedVaep(action.vaepValue)} VAEP` : ''}
+        </p>
+      </div>
+      {buildup.length ? (
+        <>
+          <p className="mb-3 text-sm text-muted-foreground">
+            Recorded actions from the same possession, ending with the goal. This shows the sequence in the event feed; it does not prove each action caused the goal.
+          </p>
+          <ol className="grid gap-2 sm:grid-cols-2">
+            {buildup.map((item, index) => (
+              <li
+                className={cn(
+                  'flex items-center gap-3 border p-3',
+                  item.actionId === action.actionId ? 'border-amber-500 bg-amber-500/10' : 'border-primary/15',
+                )}
+                key={item.actionId}
+              >
+                <span className="font-sans text-xs tabular-nums text-muted-foreground">{String(index + 1).padStart(2, '0')}</span>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-sm font-medium">
+                    {item.actionId === action.actionId
+                      ? ownGoal ? `${item.playerName} · own goal` : `${item.playerName} · GOAL`
+                      : item.playerName}
+                  </span>
+                  <span className="block truncate text-xs text-muted-foreground">
+                    {item.actionId === action.actionId && ownGoal ? `Own goal · scored for ${goalTeam}` : `${item.team} · ${titleCase(item.actionType)}`}
+                  </span>
+                </span>
+                <span className="shrink-0 text-right font-sans text-xs tabular-nums">
+                  {formatActionTime(item.periodId, item.timeSeconds)}
+                </span>
+              </li>
+            ))}
+          </ol>
+        </>
+      ) : (
+        <p className="text-sm text-muted-foreground">
+          Same-possession detail is not available for this goal in the current event feed.
+        </p>
+      )}
+    </PaperPanel>
+  );
+}
+
+function GoalStories({ actions, match, selectedActionId, teams, onSelectAction }: {
+  actions: Action[];
+  match: Match | undefined;
+  selectedActionId: number;
+  teams: string[];
+  onSelectAction: (actionId: number) => void;
+}) {
+  const goals = actions.filter((item) => item.isGoal && item.periodId !== 5);
+  if (!goals.length) {
+    if (!match || match.homeScore + match.awayScore === 0) return null;
+
+    return (
+      <PaperPanel className="mt-5">
+        <SectionHeading kicker="Score-changing moments" title="Goal recap unavailable" />
+        <p className="text-sm leading-relaxed text-muted-foreground">
+          This match finished {match.homeScore}–{match.awayScore}, but its goal events are not in the loaded data. Apply the goal-story database migration, then import <code className="font-mono text-foreground">data/seed_data_64_goals.json</code> to show the scorers, score-after cards, and goal markers. This does not retrain the model or recalculate VAEP.
+        </p>
+      </PaperPanel>
+    );
+  }
+
+  return (
+    <PaperPanel className="mt-5">
+      <SectionHeading kicker="Score-changing moments" title="Every goal" />
+      <p className="mb-4 text-sm leading-relaxed text-muted-foreground">
+        Start with the goals and score. Choose one to follow the recorded actions from that possession and see the scoring moment on the pitch.
+      </p>
+      <ol className="grid gap-3 md:grid-cols-2">
+        {goals.map((goal) => {
+          const goalTeam = goal.goalTeam === 'home' ? teams[0] : teams[1];
+          const ownGoal = goal.result.toLowerCase() === 'owngoal';
+          return (
+            <li key={goal.actionId}>
+              <button
+                aria-label={`Goal: ${goalTeam}, ${goal.playerName}${ownGoal ? ', own goal' : ''}, ${formatActionTime(goal.periodId, goal.timeSeconds)}, score ${goal.goalScoreHome} to ${goal.goalScoreAway}`}
+                aria-pressed={goal.actionId === selectedActionId}
+                className={cn(
+                  'flex w-full items-center gap-4 border p-4 text-left transition-colors hover:bg-accent/50',
+                  goal.actionId === selectedActionId ? 'border-amber-500 bg-amber-500/10' : 'border-primary/20',
+                )}
+                onClick={() => onSelectAction(goal.actionId)}
+                type="button"
+              >
+                <span aria-hidden="true" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-500 text-lg font-bold text-black">G</span>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate font-display text-lg">{goal.playerName}{ownGoal ? ' · own goal' : ''}</span>
+                  <span className="block truncate text-sm text-muted-foreground">{goalTeam} · {formatActionTime(goal.periodId, goal.timeSeconds)}</span>
+                </span>
+                <span className="shrink-0 text-right">
+                  <span className="block font-display text-2xl tabular-nums text-primary">{goal.goalScoreHome}–{goal.goalScoreAway}</span>
+                  {!ownGoal && <span className="block text-xs tabular-nums text-muted-foreground">{formatSignedVaep(goal.vaepValue)} VAEP</span>}
+                </span>
+              </button>
+            </li>
+          );
+        })}
+      </ol>
+    </PaperPanel>
+  );
+}
+
+function MatchHero({ match, matches, matchId, actionCount, playerCount, highlightCount, onMatchChange, onWatchReplay }: Readonly<{
+  match?: Match;
+  matches: Match[];
+  matchId?: number;
+  actionCount: number;
+  playerCount: number;
+  highlightCount: number;
+  onMatchChange: (id: number) => void;
+  onWatchReplay: () => void;
+}>) {
+  return (
+    <section className="match-hero relative overflow-hidden" aria-label="Selected match">
+      <div className="match-hero-lines" aria-hidden="true" />
+      <div className="relative grid gap-5 px-5 py-5 sm:px-7 md:grid-cols-[1fr_auto] md:items-center md:gap-8 md:px-9 md:py-6">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+            <p className="match-kicker">Matchday · {String(matchId ?? 1).padStart(3, '0')}</p>
+            <span aria-hidden="true" className="h-px w-7 bg-white/30" />
+            <p className="match-meta">{match ? `${matchCompetition(match)} · ${matchSeason(match)}` : 'Fixture archive'}</p>
+          </div>
+          {match ? (
+            <div className="mt-5 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 sm:gap-5">
+              <div className="min-w-0 text-right">
+                <p className="match-team">{match.homeTeam}</p>
+                <p className="match-side-label">Home</p>
+              </div>
+              <p className="match-score" aria-label={`${match.homeScore} to ${match.awayScore}`}>
+                <span>{match.homeScore}</span><span className="match-score-divider">:</span><span>{match.awayScore}</span>
+              </p>
+              <div className="min-w-0">
+                <p className="match-team">{match.awayTeam}</p>
+                <p className="match-side-label">Away</p>
+              </div>
+            </div>
+          ) : (
+            <h1 className="match-team mt-4">No fixture selected</h1>
+          )}
+          <div className="mt-5 flex flex-wrap items-end gap-x-5 gap-y-3">
+            <div className="match-fixture-select">
+              <CatalogSelect
+                aria-label="Select match"
+                label="Choose a fixture"
+                onChange={(event) => onMatchChange(Number(event.target.value))}
+                value={matchId ?? ''}
+              >
+                {matches.map((item) => (
+                  <option key={item.matchId} value={item.matchId}>
+                    {item.homeTeam} {item.homeScore}–{item.awayScore} {item.awayTeam} · {matchCompetition(item)}
+                  </option>
+                ))}
+              </CatalogSelect>
+            </div>
+            <div className="match-facts" aria-label="Match data summary">
+              <span><strong>{actionCount.toLocaleString()}</strong> actions</span>
+              <span><strong>{playerCount}</strong> players</span>
+              <span><strong>{highlightCount}</strong> key moments</span>
+            </div>
+          </div>
+        </div>
+        <div className="flex items-center justify-between gap-4 md:flex-col md:items-end md:justify-center">
+          <div className="match-ball-wrap hidden md:block" aria-hidden="true">
+            <EngravedFootball className="relative h-24 w-24 opacity-80" />
+          </div>
+          <Button className="match-cta shrink-0" onClick={onWatchReplay} type="button">
+            <Play className="h-4 w-4" /> Watch replay
+          </Button>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function ActionInspector({ action }: { action: Action }) {
-  const probs = deriveProbabilities(action);
+  const isShootoutAction = action.periodId === 5 || action.actionType.endsWith('_shootout');
   const [animatedVaep, setAnimatedVaep] = useState(0);
 
   useEffect(() => {
@@ -174,38 +387,48 @@ function ActionInspector({ action }: { action: Action }) {
 
   return (
     <div className="flex h-full flex-col">
-      <p className="label-meta">Valued action</p>
-      <p className="font-display mt-2 text-3xl font-semibold leading-none text-primary">{titleCase(action.actionType)}</p>
+      <p className="label-meta">{action.isGoal ? 'Score-changing moment' : isShootoutAction ? 'Penalty shootout action' : 'Valued action'}</p>
+      <p className="font-display mt-2 text-3xl font-semibold leading-none text-primary">{action.isGoal ? 'GOAL' : titleCase(action.actionType)}</p>
       <p className="mt-2 text-sm text-muted-foreground">
-        {action.playerName} → {titleCase(action.result)} · {formatTime(action.timeSeconds)} · Period {action.periodId}
+        {action.playerName} → {action.isGoal ? `Score ${action.goalScoreHome}–${action.goalScoreAway}` : titleCase(action.result)} · {formatActionTime(action.periodId, action.timeSeconds)} · Period {action.periodId}
       </p>
       <p className="font-display mt-6 text-6xl font-semibold leading-none tracking-tight text-primary">
-        {formatSignedVaep(animatedVaep)}
+        {isShootoutAction ? '—' : formatSignedVaep(animatedVaep)}
       </p>
-      <p className="label-meta mt-2">VAEP value</p>
-      <dl className="mt-6 space-y-4 border-t border-primary/20 pt-4">
-        <div>
-          <dt className="label-meta">Scoring probability</dt>
-          <dd className="mt-1 font-display text-2xl">{formatPercent(probs.scoresBefore)} → {formatPercent(probs.scoresAfter)}</dd>
-        </div>
-        <div>
-          <dt className="label-meta">Conceding probability</dt>
-          <dd className="mt-1 font-display text-2xl">{formatPercent(probs.concedesBefore)} → {formatPercent(probs.concedesAfter)}</dd>
-        </div>
-        <div className="grid grid-cols-2 gap-4 pt-2 text-sm">
-          <div>
-            <dt className="label-meta">Offensive</dt>
-            <dd className="mt-1 font-medium">{formatSignedVaep(action.offensiveValue)}</dd>
-          </div>
-          <div>
-            <dt className="label-meta">Defensive</dt>
-            <dd className="mt-1 font-medium">{formatSignedVaep(action.defensiveValue)}</dd>
-          </div>
-        </div>
-        <p className="text-sm text-muted-foreground">
-          Location {pitchZone(action.startX, action.startY)} · {action.team}
-        </p>
-      </dl>
+      {isShootoutAction ? (
+        <p className="mt-2 text-sm text-muted-foreground">Shootout kicks stay visible in the replay, but are not rated as normal match actions.</p>
+      ) : (
+        <>
+          <p className="label-meta mt-2">Estimated change in team value</p>
+          <dl className="mt-6 space-y-4 border-t border-primary/20 pt-4">
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <div>
+                <dt className="label-meta">Attack contribution</dt>
+                <dd className="mt-1 font-medium">{formatSignedVaep(action.offensiveValue)}</dd>
+              </div>
+              <div>
+                <dt className="label-meta">Defence contribution</dt>
+                <dd className="mt-1 font-medium">{formatSignedVaep(action.defensiveValue)}</dd>
+              </div>
+            </div>
+            <p className="rounded-sm bg-primary/5 p-3 text-sm leading-relaxed text-muted-foreground">
+              <strong className="text-foreground">In simple terms:</strong>{' '}
+              {action.vaepValue > 0.01
+                ? 'This action improved the team’s estimated chance of scoring or reduced its chance of conceding.'
+                : action.vaepValue < -0.01
+                  ? 'This action lowered the team’s estimated chance of scoring or increased its chance of conceding.'
+                  : 'This action made little estimated difference to the team’s scoring or conceding chances.'}
+              {' '}This is a model estimate, not a goal or a verdict on the player.
+            </p>
+            <p className="text-xs leading-relaxed text-muted-foreground">
+              VAEP considers the next ten actions when estimating outcome risk. This value is the change for the selected action; it does not prove that the action caused a later goal.
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Location {pitchZone(action.startX, action.startY)} · {action.team}
+            </p>
+          </dl>
+        </>
+      )}
     </div>
   );
 }
@@ -250,7 +473,10 @@ export default function ReplayPage() {
   );
   const sequences = useMemo(() => buildSequences(actions), [actions]);
   const playerNames = useMemo(() => [...new Set(actions.map((item) => item.playerName))].sort(), [actions]);
-  const teams = useMemo(() => [...new Set(actions.map((item) => item.team))].sort(), [actions]);
+  const teams = useMemo(
+    () => selectedMatch ? [selectedMatch.homeTeam, selectedMatch.awayTeam] : [...new Set(actions.map((item) => item.team))].sort(),
+    [actions, selectedMatch],
+  );
   const types = useMemo(() => [...new Set(actions.map((item) => item.actionType))].sort(), [actions]);
 
   const filteredActions = useMemo(() => actions.filter((item) => {
@@ -261,6 +487,25 @@ export default function ReplayPage() {
       && (zoneFilter === 'all' || zone.startsWith(zoneFilter))
       && Math.abs(item.vaepValue) >= minVaep;
   }), [actions, minVaep, playerFilter, teamFilter, typeFilter, zoneFilter]);
+  const timelineActions = useMemo(() => actions.filter(isTimelineEvent), [actions]);
+  const timelineLanes = useMemo(() => {
+    const laneTimes: number[] = [];
+    return timelineActions.map((item) => {
+      let lane = laneTimes.findIndex((lastTime) => item.timeSeconds - lastTime >= 240);
+      if (lane < 0) {
+        lane = laneTimes.length;
+        laneTimes.push(Number.NEGATIVE_INFINITY);
+      }
+      laneTimes[lane] = item.timeSeconds;
+      return lane;
+    });
+  }, [timelineActions]);
+  const timelineLaneCount = Math.max(0, ...timelineLanes) + 1;
+  const timelineDuration = Math.max(
+    90 * 60,
+    Math.ceil(Math.max(0, ...actions.filter((item) => item.periodId !== 5).map((item) => item.timeSeconds)) / (15 * 60)) * 15 * 60,
+  );
+  const timelineTicks = Array.from({ length: Math.floor(timelineDuration / (15 * 60)) + 1 }, (_, index) => index * 15 * 60);
 
   const visibleActions = hoveredPlayerId
     ? actions.filter((item) => item.playerId === hoveredPlayerId)
@@ -298,6 +543,7 @@ export default function ReplayPage() {
   const selectActionId = (actionId: number) => {
     const index = actions.findIndex((item) => item.actionId === actionId);
     if (index >= 0) {
+      if (actions[index].isGoal) setSection('Overview');
       setCurrentIndex(index);
       setIsPlaying(false);
     }
@@ -317,7 +563,23 @@ export default function ReplayPage() {
 
   return (
     <div className="space-y-8">
-      <MatchHero match={selectedMatch} matchId={matchId} matches={matches.data ?? []} onMatchChange={setMatchId} />
+      <MatchHero
+        actionCount={actions.length}
+        highlightCount={actions.filter((item) => item.result.toLowerCase() === 'goal' || item.actionType.toLowerCase().includes('shot') || Math.abs(item.vaepValue) >= 0.08).length}
+        match={selectedMatch}
+        matchId={matchId}
+        matches={matches.data ?? []}
+        onMatchChange={setMatchId}
+        onWatchReplay={() => {
+          setSection('Overview');
+          window.setTimeout(() => document.getElementById('replay-pitch')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 0);
+        }}
+        playerCount={players.length}
+      />
+
+      <aside className="border-l-4 border-primary bg-primary/5 px-4 py-3 text-sm leading-relaxed text-muted-foreground">
+        <strong className="text-foreground">First time here?</strong> The score is the result. VAEP is a separate estimate of how each action changes the team’s chances of scoring and conceding; positive is better for that team, negative is worse. It is a guide to the match, not a replacement for watching it.
+      </aside>
 
       <nav aria-label="Match sections" className="blueprint-band flex gap-1 overflow-x-auto border-y border-primary/25 py-2">
         {SECTIONS.map((item) => (
@@ -330,7 +592,7 @@ export default function ReplayPage() {
             onClick={() => setSection(item)}
             type="button"
           >
-            <span className={cn('border-b pb-1', section === item ? 'border-primary' : 'border-transparent')}>{item}</span>
+            <span className={cn('border-b pb-1', section === item ? 'border-primary' : 'border-transparent')}>{SECTION_LABELS[item]}</span>
           </button>
         ))}
       </nav>
@@ -341,12 +603,21 @@ export default function ReplayPage() {
         </PaperPanel>
       ) : (
         <>
+          {section === 'Moments' && (
+            <KeyMoments actions={actions} onSelectAction={selectActionId} selectedActionId={action.actionId} />
+          )}
+
+          {section === 'Activity' && <OnBallActivity actions={actions} teams={teams} />}
+
+          {section === 'Compare' && <PlayerComparison players={players} />}
+
           {(section === 'Overview' || section === 'VAEP') && (
             <section className="grid gap-6 xl:grid-cols-[minmax(0,1.4fr)_minmax(18rem,0.9fr)]">
-              <div>
+              <div id="replay-pitch" className="scroll-mt-5 min-w-0">
                 <SectionHeading aside="Thin linework, player marks, and the selected trajectory." kicker="Tactical plate" title="Interactive pitch" />
                 <EngravedPitch
                   actions={visibleActions}
+                  homeTeam={selectedMatch?.homeTeam}
                   hoveredPlayerId={hoveredPlayerId}
                   onHoverPlayer={setHoveredPlayerId}
                   onSelectAction={selectActionId}
@@ -381,6 +652,8 @@ export default function ReplayPage() {
                       </select>
                     </label>
                   </div>
+                  <ShotContext action={action} actions={actions} onSelectAction={selectActionId} />
+                  <GoalBuildUp action={action} actions={actions} teams={teams} />
                 </div>
               </div>
               <PaperPanel>
@@ -391,31 +664,73 @@ export default function ReplayPage() {
 
           {(section === 'Overview' || section === 'Timeline') && (
             <section>
-              <SectionHeading aside="Goals, shots and high-value actions along the ninety." kicker="Chronology" title="Match timeline" />
-              <div className="relative overflow-x-auto border border-primary/20 py-8">
-                <div className="absolute left-6 right-6 top-1/2 h-px bg-primary/30" />
-                <ol className="relative flex min-w-[46rem] gap-2 px-6">
-                  {actions.map((item, index) => (
-                    <li className="flex min-w-0 flex-1 justify-center" key={item.id}>
+              <SectionHeading aside={`${timelineActions.length} notable actions shown. Select a mark to inspect it.`} kicker="Match story" title="Key-action timeline" />
+              <div aria-label="Key match actions" className="match-timeline">
+                <div aria-hidden="true" className="match-timeline-axis">
+                  {timelineTicks.map((tick) => (
+                    <span className="match-timeline-tick" key={tick} style={{ left: `${(tick / timelineDuration) * 100}%` }}>
+                      <span>{formatActionTime(1, tick)}</span>
+                    </span>
+                  ))}
+                </div>
+                <div className="match-timeline-events" style={{ height: `${Math.max(84, timelineLaneCount * 18 + 12)}px` }}>
+                  {timelineActions.map((item, index) => {
+                    const teamIndex = item.isGoal && item.goalTeam
+                      ? item.goalTeam === 'home' ? 0 : 1
+                      : teams.indexOf(item.team);
+                    const type = item.actionType.toLowerCase().replace(/[-_]/g, ' ');
+                    const label = item.isGoal ? 'Goal'
+                      : type.includes('shot') ? 'Shot'
+                      : type.includes('card') ? 'Card'
+                        : type.includes('sub') ? 'Substitution'
+                          : 'High-impact action';
+                    return (
                       <button
+                        aria-label={`${label}: ${item.playerName}, ${item.goalTeam ? teams[item.goalTeam === 'home' ? 0 : 1] : item.team}, ${formatActionTime(item.periodId, item.timeSeconds)}${item.isGoal ? `, score ${item.goalScoreHome} to ${item.goalScoreAway}` : `, VAEP ${formatSignedVaep(item.vaepValue)}`}`}
                         className={cn(
-                          'group flex flex-col items-center gap-1 text-primary',
-                          index === currentIndex ? 'opacity-100' : 'opacity-55 hover:opacity-100',
+                          'match-timeline-event',
+                          teamIndex === 1 ? 'match-timeline-away' : 'match-timeline-home',
+                          item.isGoal && 'match-timeline-goal',
+                          type.includes('shot') && 'match-timeline-shot',
+                          Math.abs(item.vaepValue) >= 0.15 && 'match-timeline-high-value',
+                          item.actionId === action.actionId && 'match-timeline-selected',
                         )}
+                        key={item.id}
                         onClick={() => selectActionId(item.actionId)}
-                        title={`${titleCase(item.actionType)} · ${item.playerName} · ${formatSignedVaep(item.vaepValue)}`}
+                        style={{
+                          left: `${Math.min((item.timeSeconds / timelineDuration) * 100, 100)}%`,
+                          top: `${9 + timelineLanes[index] * 18}px`,
+                        }}
+                        title={item.isGoal
+                          ? `GOAL · ${item.playerName}${item.result.toLowerCase() === 'owngoal' ? ' (own goal)' : ''} · ${item.goalTeam === 'home' ? teams[0] : teams[1]} · ${formatActionTime(item.periodId, item.timeSeconds)} · ${item.goalScoreHome}–${item.goalScoreAway}`
+                          : `${label} · ${item.playerName} · ${item.team} · ${formatActionTime(item.periodId, item.timeSeconds)} · ${formatSignedVaep(item.vaepValue)} VAEP`}
                         type="button"
                       >
-                        <span className="label-meta">{formatTime(item.timeSeconds)}</span>
-                        <span className={cn('flex h-8 w-8 items-center justify-center border border-primary/40 bg-card', index === currentIndex && 'bg-primary text-primary-foreground')}>
-                          <TimelineGlyph result={item.result} type={item.actionType} />
-                        </span>
-                        <span className="hidden max-w-16 truncate font-sans text-[10px] uppercase tracking-wider group-hover:block">{item.playerName}</span>
+                        {item.isGoal ? 'G' : type.includes('shot') ? 'S' : type.includes('card') ? 'C' : type.includes('sub') ? '↔' : 'V'}
                       </button>
-                    </li>
-                  ))}
-                </ol>
+                    );
+                  })}
+                </div>
+                <div className="match-timeline-legend">
+                  <span><i className="match-timeline-key match-timeline-home" />{teams[0] ?? 'Home'} (home)</span>
+                  <span><i className="match-timeline-key match-timeline-away" />{teams[1] ?? 'Away'} (away)</span>
+                  <span><i className="match-timeline-key match-timeline-goal">G</i>Goal</span>
+                  <span><i className="match-timeline-key match-timeline-shot">S</i>Shot (not a goal)</span>
+                  <span><i className="match-timeline-key match-timeline-high-value">V</i>Large model-estimated change</span>
+                </div>
               </div>
+              <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
+                Goals are marked first and show the score after they were scored. Other shots did not necessarily result in goals. Select a goal to see the recorded actions from that possession. The timeline is selective; use the replay controls above to move through every action. Shootout kicks are separate from the match clock.
+              </p>
+              <GoalStories actions={actions} match={selectedMatch} onSelectAction={selectActionId} selectedActionId={action.actionId} teams={teams} />
+              <PaperPanel className="mt-5">
+                <SectionHeading kicker="New to VAEP?" title="How to read this match" />
+                <div className="grid gap-4 text-sm leading-relaxed text-muted-foreground md:grid-cols-3">
+                  <p><strong className="text-foreground">Start with the goals.</strong> Each goal card shows the scorer, time, and score at that moment. Select it to follow the actions in that possession.</p>
+                  <p><strong className="text-foreground">A shot is not always a goal.</strong> Goal markers come from the recorded event outcome; other shots stay separate, even if their VAEP is high.</p>
+                  <p><strong className="text-foreground">Read VAEP as context.</strong> Positive means the model estimates the action helped the team; negative means it hurt the estimate. It is not a goal count, a causal claim, or a complete player rating.</p>
+                </div>
+              </PaperPanel>
             </section>
           )}
 
@@ -462,7 +777,7 @@ export default function ReplayPage() {
                   >
                     <div className="w-14 shrink-0">
                       <p className="font-display text-3xl leading-none text-primary">{String(index + 1).padStart(2, '0')}</p>
-                      <p className="mt-2 font-sans text-xs tabular-nums">{formatTime(item.timeSeconds)}</p>
+                      <p className="mt-2 font-sans text-xs tabular-nums">{formatActionTime(item.periodId, item.timeSeconds)}</p>
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="font-display text-xl leading-tight">{item.playerName}</p>
@@ -567,7 +882,7 @@ export default function ReplayPage() {
                               {titleCase(step.actionType)}
                             </p>
                             <p className="text-sm text-muted-foreground">
-                              {step.playerName} · {formatTime(step.timeSeconds)} · {formatSignedVaep(step.vaepValue)}
+                              {step.playerName} · {formatActionTime(step.periodId, step.timeSeconds)} · {formatSignedVaep(step.vaepValue)}
                               {index === sequence.peakIndex ? ' · largest change' : ''}
                             </p>
                           </button>
@@ -597,7 +912,7 @@ export default function ReplayPage() {
                     <li>Type · {titleCase(action.actionType)}</li>
                     <li>Result · {titleCase(action.result)}</li>
                     <li>Location · ({action.startX.toFixed(1)}, {action.startY.toFixed(1)}) → ({action.endX.toFixed(1)}, {action.endY.toFixed(1)})</li>
-                    <li>Time · period {action.periodId}, {formatTime(action.timeSeconds)}</li>
+                    <li>Time · period {action.periodId}, {formatActionTime(action.periodId, action.timeSeconds)}</li>
                   </ul>
                 </div>
                 <div>

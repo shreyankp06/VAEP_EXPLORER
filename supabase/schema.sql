@@ -30,6 +30,11 @@ create table if not exists public.actions (
   time_seconds real not null,
   action_type text not null,
   result text not null,
+  is_goal boolean not null default false,
+  goal_team text,
+  goal_score_home integer,
+  goal_score_away integer,
+  possession_id integer,
   start_x real not null,
   start_y real not null,
   end_x real not null,
@@ -38,6 +43,11 @@ create table if not exists public.actions (
   offensive_value real not null,
   defensive_value real not null,
   constraint actions_match_action_unique unique (match_id, action_id),
+  constraint actions_goal_team_valid check (goal_team is null or goal_team in ('home', 'away')),
+  constraint actions_goal_score_nonnegative check (
+    (goal_score_home is null and goal_score_away is null)
+    or (goal_score_home >= 0 and goal_score_away >= 0)
+  ),
   constraint actions_period_positive check (period_id > 0),
   constraint actions_time_nonnegative check (time_seconds >= 0),
   constraint actions_start_x_pitch_bounds check (start_x between 0 and 105),

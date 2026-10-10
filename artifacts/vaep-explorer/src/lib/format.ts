@@ -13,6 +13,22 @@ export const formatTime = (seconds: number) => {
   return `${Math.floor(safe / 60)}:${(safe % 60).toString().padStart(2, '0')}`;
 };
 
+const PERIOD_START_SECONDS: Record<number, number> = {
+  1: 0,
+  2: 45 * 60,
+  3: 90 * 60,
+  4: 105 * 60,
+  5: 120 * 60,
+};
+
+export const toMatchClockSeconds = (periodId: number, periodSeconds: number) =>
+  periodSeconds + (PERIOD_START_SECONDS[periodId] ?? 0);
+
+export const formatActionTime = (periodId: number, matchClockSeconds: number) =>
+  periodId === 5
+    ? `SO ${formatTime(matchClockSeconds - PERIOD_START_SECONDS[5])}`
+    : formatTime(matchClockSeconds);
+
 export const titleCase = (value: string) =>
   value.replace(/[_-]+/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase());
 

@@ -11,7 +11,7 @@ This matrix maps the supplied VAEP Explorer SRS v1.0 to the current repository. 
 | REQ-5 league/season leaderboard | Partial | Ranked leaderboard exists; explicit league/season API filters remain |
 | REQ-6 sort rating, goals, assists, market value | Partial | VAEP metric sorting exists; source data has no goals, assists, or market value fields |
 | REQ-7 action-type breakdown per player | Planned | Dataset supports action aggregation; expandable row chart remains |
-| REQ-8 compare two players | Planned | Follow-on UI module |
+| REQ-8 compare two players | Implemented | Match replay Compare section; selects two players from the fixture and compares action count, success rate, and VAEP components |
 | REQ-9 quality vs quantity with threshold | Implemented | Scatter endpoint and minimum-actions filter |
 | REQ-10 top-player isoline | Planned | Follow-on chart enhancement |
 | REQ-11 league, position, minutes filters | Partial | Position and action threshold implemented; league and minutes filters remain |
@@ -32,4 +32,4 @@ This matrix maps the supplied VAEP Explorer SRS v1.0 to the current repository. 
 
 ## Recommended next milestone
 
-Finish the remaining high/medium-priority items before the two low-priority SRS modules: league/season filters, player action breakdown, two-player comparison, scatter isoline, automated pipeline tests, API integration tests, and deployed performance/accessibility checks.
+Finish the remaining high/medium-priority items before the two low-priority SRS modules: league/season filters, player action breakdown, scatter isoline, automated pipeline tests, API integration tests, and deployed performance/accessibility checks.
