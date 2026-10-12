@@ -64,6 +64,7 @@ pnpm --filter @workspace/vaep-explorer dev
 ```
 
 ```powershell
+In a First terminal:
 pnpm install --frozen-lockfile
 pnpm db:setup
 pnpm db:check
