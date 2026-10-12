@@ -160,80 +160,85 @@ function ShotContext({ action, actions, onSelectAction }: {
   );
 }
 
-function GoalBuildUp({ action, actions, teams, onSelectAction }: {
-  action: Action;
+function GoalBuildUp({ goalAction, selectedActionId, actions, teams, onSelectAction }: {
+  goalAction: Action;
+  selectedActionId: number;
   actions: Action[];
   teams: string[];
   onSelectAction: (actionId: number) => void;
 }) {
-  if (!action.isGoal) return null;
-
-  const goalTeam = action.goalTeam === 'home' ? teams[0] : teams[1];
-  const ownGoal = action.result.toLowerCase() === 'owngoal';
-  const samePeriod = actions.filter((item) => item.periodId === action.periodId && item.periodId !== 5);
-  const goalIndex = samePeriod.findIndex((item) => item.actionId === action.actionId);
+  const goalTeam = goalAction.goalTeam === 'home' ? teams[0] : teams[1];
+  const ownGoal = goalAction.result.toLowerCase() === 'owngoal';
+  const samePeriod = actions.filter((item) => item.periodId === goalAction.periodId && item.periodId !== 5);
+  const goalIndex = samePeriod.findIndex((item) => item.actionId === goalAction.actionId);
   const buildup = goalIndex >= 0 ? samePeriod.slice(Math.max(0, goalIndex - 9), goalIndex + 1) : [];
 
   return (
-    <PaperPanel className="mt-4">
-      <SectionHeading kicker="The moment that changed the score" title="How the goal happened" />
-      <div className="mb-4 flex flex-wrap items-baseline justify-between gap-2 border-l-4 border-amber-500 bg-amber-500/10 px-4 py-3">
-        <p className="font-display text-xl text-foreground">
-          GOAL · {action.playerName}{ownGoal ? ' (own goal)' : ''} · {goalTeam}
-        </p>
-        <p className="font-display text-2xl tabular-nums text-primary">
-          {action.goalScoreHome}–{action.goalScoreAway}
-        </p>
-        <p className="w-full text-xs text-muted-foreground">
-          {formatActionTime(action.periodId, action.timeSeconds)}
-          {!ownGoal ? ` · Finish model estimate ${formatSignedVaep(action.vaepValue)} VAEP` : ''}
-        </p>
-      </div>
-      {buildup.length ? (
-        <>
-          <p className="mb-3 text-sm text-muted-foreground">
-            The nine recorded actions immediately before the goal, followed by the finish. This can include both teams and stoppage actions; it shows match context, not proof that every action caused the goal.
+    <div className="mt-4" id="goal-build-up">
+      <PaperPanel>
+        <SectionHeading kicker="The moment that changed the score" title="How the goal happened" />
+        <div className="mb-4 flex flex-wrap items-baseline justify-between gap-2 border-l-4 border-amber-500 bg-amber-500/10 px-4 py-3">
+          <p className="font-display text-xl text-foreground">
+            GOAL · {goalAction.playerName}{ownGoal ? ' (own goal)' : ''} · {goalTeam}
           </p>
-          <ol className="goal-buildup-list">
-            {buildup.map((item, index) => (
-              <li key={item.actionId}>
-                <button
-                  aria-current={item.actionId === action.actionId ? 'step' : undefined}
-                  className={cn(
-                    'goal-buildup-step',
-                    item.actionId === action.actionId
-                      ? 'goal-buildup-finish'
-                      : teams.indexOf(item.team) === 1 ? 'goal-buildup-away' : 'goal-buildup-home',
-                  )}
-                  onClick={() => onSelectAction(item.actionId)}
-                  type="button"
-                >
-                  <span className="goal-buildup-number">{item.actionId === action.actionId ? 'GOAL' : String(index + 1).padStart(2, '0')}</span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate text-sm font-semibold">
-                      {item.actionId === action.actionId
-                        ? ownGoal ? `${item.playerName} · own goal` : `${item.playerName} · goal`
-                        : item.playerName}
-                    </span>
-                    <span className="block truncate text-xs text-muted-foreground">
-                      {item.actionId === action.actionId && ownGoal ? `Scored for ${goalTeam}` : `${item.team} · ${titleCase(item.actionType)} · ${titleCase(item.result)}`}
-                    </span>
-                  </span>
-                  <span className="shrink-0 text-right font-sans text-xs tabular-nums">
-                    <span className="block">{formatActionTime(item.periodId, item.timeSeconds)}</span>
-                    <span className="block text-primary">{formatSignedVaep(item.vaepValue)}</span>
-                  </span>
-                </button>
-              </li>
-            ))}
-          </ol>
-        </>
-      ) : (
-        <p className="text-sm text-muted-foreground">
-          The goal and its preceding actions could not be located in this period’s event feed.
-        </p>
-      )}
-    </PaperPanel>
+          <p className="font-display text-2xl tabular-nums text-primary">
+            {goalAction.goalScoreHome}–{goalAction.goalScoreAway}
+          </p>
+          <p className="w-full text-xs text-muted-foreground">
+            {formatActionTime(goalAction.periodId, goalAction.timeSeconds)}
+            {!ownGoal ? ` · Finish model estimate ${formatSignedVaep(goalAction.vaepValue)} VAEP` : ''}
+          </p>
+        </div>
+        {buildup.length ? (
+          <>
+            <p className="mb-3 text-sm text-muted-foreground">
+              The nine recorded actions immediately before the goal, followed by the finish. This can include both teams and stoppage actions; it shows match context, not proof that every action caused the goal.
+            </p>
+            <ol className="goal-buildup-list">
+              {buildup.map((item, index) => {
+                const isGoal = item.actionId === goalAction.actionId;
+                return (
+                  <li key={item.actionId}>
+                    <button
+                      aria-current={item.actionId === selectedActionId ? 'step' : undefined}
+                      className={cn(
+                        'goal-buildup-step',
+                        isGoal
+                          ? 'goal-buildup-finish'
+                          : teams.indexOf(item.team) === 1 ? 'goal-buildup-away' : 'goal-buildup-home',
+                        item.actionId === selectedActionId && 'goal-buildup-step-selected',
+                      )}
+                      onClick={() => onSelectAction(item.actionId)}
+                      type="button"
+                    >
+                      <span className="goal-buildup-number">{isGoal ? 'GOAL' : String(index + 1).padStart(2, '0')}</span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-sm font-semibold">
+                          {isGoal
+                            ? ownGoal ? `${item.playerName} · own goal` : `${item.playerName} · goal`
+                            : item.playerName}
+                        </span>
+                        <span className="block truncate text-xs text-muted-foreground">
+                          {isGoal && ownGoal ? `Scored for ${goalTeam}` : `${item.team} · ${titleCase(item.actionType)} · ${titleCase(item.result)}`}
+                        </span>
+                      </span>
+                      <span className="shrink-0 text-right font-sans text-xs tabular-nums">
+                        <span className="block">{formatActionTime(item.periodId, item.timeSeconds)}</span>
+                        <span className="block text-primary">{formatSignedVaep(item.vaepValue)}</span>
+                      </span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ol>
+          </>
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            The goal and its preceding actions could not be located in this period’s event feed.
+          </p>
+        )}
+      </PaperPanel>
+    </div>
   );
 }
 
@@ -291,7 +296,12 @@ function GoalStories({ actions, match, selectedActionId, teams, onSelectAction }
                         aria-label={`Goal: ${goalTeam}, ${goal.playerName}${ownGoal ? ', own goal' : ''}, ${formatActionTime(goal.periodId, goal.timeSeconds)}, score ${goal.goalScoreHome} to ${goal.goalScoreAway}`}
                         aria-pressed={goal.actionId === selectedActionId}
                         className={cn('goal-story-card', goal.actionId === selectedActionId && 'goal-story-card-selected')}
-                        onClick={() => onSelectAction(goal.actionId)}
+                        onClick={() => {
+                          onSelectAction(goal.actionId);
+                          window.requestAnimationFrame(() => window.requestAnimationFrame(() => {
+                            document.getElementById('goal-build-up')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                          }));
+                        }}
                         type="button"
                       >
                         <span aria-hidden="true" className="goal-story-badge">G</span>
@@ -511,6 +521,7 @@ export default function ReplayPage() {
   const [playerSearch, setPlayerSearch] = useState('');
   const [playerTeamFilter, setPlayerTeamFilter] = useState('all');
   const [selectedPlayerId, setSelectedPlayerId] = useState<number | null>(null);
+  const [focusedGoalId, setFocusedGoalId] = useState<number | null>(null);
 
   const actions = useMemo(
     () => [...(actionsQuery.data ?? [])].sort((a, b) => a.timeSeconds - b.timeSeconds || a.id - b.id),
@@ -594,6 +605,7 @@ export default function ReplayPage() {
     setPlayerSearch('');
     setPlayerTeamFilter('all');
     setSelectedPlayerId(null);
+    setFocusedGoalId(null);
   }, [matchId]);
 
   useEffect(() => {
@@ -612,7 +624,10 @@ export default function ReplayPage() {
   const selectActionId = (actionId: number) => {
     const index = actions.findIndex((item) => item.actionId === actionId);
     if (index >= 0) {
-      if (actions[index].isGoal) setSection('Overview');
+      if (actions[index].isGoal) {
+        setSection('Overview');
+        setFocusedGoalId(actionId);
+      }
       setCurrentIndex(index);
       setIsPlaying(false);
     }
@@ -634,6 +649,7 @@ export default function ReplayPage() {
     (playerTeamFilter === 'all' || player.team === playerTeamFilter)
     && `${player.name} ${player.team}`.toLowerCase().includes(playerSearch.trim().toLowerCase()));
   const selectedPlayer = players.find((player) => player.playerId === selectedPlayerId);
+  const focusedGoal = actions.find((item) => item.actionId === focusedGoalId && item.isGoal);
   const selectedPlayerActions = selectedPlayer
     ? standardPlayActions.filter((item) => item.playerId === selectedPlayer.playerId)
     : [];
@@ -739,7 +755,7 @@ export default function ReplayPage() {
                     </label>
                   </div>
                   <ShotContext action={action} actions={actions} onSelectAction={selectActionId} />
-                  <GoalBuildUp action={action} actions={actions} onSelectAction={selectActionId} teams={teams} />
+                  {focusedGoal && <GoalBuildUp goalAction={focusedGoal} selectedActionId={action.actionId} actions={actions} onSelectAction={selectActionId} teams={teams} />}
                 </div>
               </div>
               <PaperPanel>
