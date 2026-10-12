@@ -16,7 +16,6 @@ type Marker = {
 export type PlayerPitchDetail = {
   actions: number;
   totalVaep: number;
-  vaepPer90: number;
 };
 
 function uniqueMarkers(actions: Action[], selected?: Action): Marker[] {
@@ -396,7 +395,6 @@ export function EngravedPitch({
               <div className="pitch-dossier-stats">
                 <span>{activeDetail.actions} actions</span>
                 <span>{activeDetail.totalVaep >= 0 ? '+' : ''}{activeDetail.totalVaep.toFixed(3)} VAEP</span>
-                <span>{activeDetail.vaepPer90 >= 0 ? '+' : ''}{activeDetail.vaepPer90.toFixed(3)} / 90</span>
               </div>
             ) : null}
           </div>

@@ -6,6 +6,7 @@ import { CatalogSelect, CardGlyph, EngravedFootball, GoalGlyph, PaperPanel, Sect
 import { EngravedPitch, MiniPitch, type PlayerPitchDetail } from '@/components/pitch/EngravedPitch';
 import { KeyMoments, MatchScorecard, OnBallActivity, PlayerComparison } from '@/components/pitch/MatchInsights';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Slider } from '@/components/ui/slider';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -159,23 +160,19 @@ function ShotContext({ action, actions, onSelectAction }: {
   );
 }
 
-function GoalBuildUp({ action, actions, teams }: {
+function GoalBuildUp({ action, actions, teams, onSelectAction }: {
   action: Action;
   actions: Action[];
   teams: string[];
+  onSelectAction: (actionId: number) => void;
 }) {
   if (!action.isGoal) return null;
 
   const goalTeam = action.goalTeam === 'home' ? teams[0] : teams[1];
   const ownGoal = action.result.toLowerCase() === 'owngoal';
-  const samePossession = action.possessionId === null
-    ? []
-    : actions.filter((item) => item.periodId === action.periodId
-      && item.possessionId === action.possessionId
-      && (item.timeSeconds < action.timeSeconds
-        || (item.timeSeconds === action.timeSeconds && item.actionId <= action.actionId)));
-  const goalIndex = samePossession.findIndex((item) => item.actionId === action.actionId);
-  const buildup = goalIndex >= 0 ? samePossession.slice(Math.max(0, goalIndex - 9), goalIndex + 1) : [];
+  const samePeriod = actions.filter((item) => item.periodId === action.periodId && item.periodId !== 5);
+  const goalIndex = samePeriod.findIndex((item) => item.actionId === action.actionId);
+  const buildup = goalIndex >= 0 ? samePeriod.slice(Math.max(0, goalIndex - 9), goalIndex + 1) : [];
 
   return (
     <PaperPanel className="mt-4">
@@ -195,38 +192,45 @@ function GoalBuildUp({ action, actions, teams }: {
       {buildup.length ? (
         <>
           <p className="mb-3 text-sm text-muted-foreground">
-            Recorded actions from the same possession, ending with the goal. This shows the sequence in the event feed; it does not prove each action caused the goal.
+            The nine recorded actions immediately before the goal, followed by the finish. This can include both teams and stoppage actions; it shows match context, not proof that every action caused the goal.
           </p>
-          <ol className="grid gap-2 sm:grid-cols-2">
+          <ol className="goal-buildup-list">
             {buildup.map((item, index) => (
-              <li
-                className={cn(
-                  'flex items-center gap-3 border p-3',
-                  item.actionId === action.actionId ? 'border-amber-500 bg-amber-500/10' : 'border-primary/15',
-                )}
-                key={item.actionId}
-              >
-                <span className="font-sans text-xs tabular-nums text-muted-foreground">{String(index + 1).padStart(2, '0')}</span>
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate text-sm font-medium">
-                    {item.actionId === action.actionId
-                      ? ownGoal ? `${item.playerName} · own goal` : `${item.playerName} · GOAL`
-                      : item.playerName}
+              <li key={item.actionId}>
+                <button
+                  aria-current={item.actionId === action.actionId ? 'step' : undefined}
+                  className={cn(
+                    'goal-buildup-step',
+                    item.actionId === action.actionId
+                      ? 'goal-buildup-finish'
+                      : teams.indexOf(item.team) === 1 ? 'goal-buildup-away' : 'goal-buildup-home',
+                  )}
+                  onClick={() => onSelectAction(item.actionId)}
+                  type="button"
+                >
+                  <span className="goal-buildup-number">{item.actionId === action.actionId ? 'GOAL' : String(index + 1).padStart(2, '0')}</span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-sm font-semibold">
+                      {item.actionId === action.actionId
+                        ? ownGoal ? `${item.playerName} · own goal` : `${item.playerName} · goal`
+                        : item.playerName}
+                    </span>
+                    <span className="block truncate text-xs text-muted-foreground">
+                      {item.actionId === action.actionId && ownGoal ? `Scored for ${goalTeam}` : `${item.team} · ${titleCase(item.actionType)} · ${titleCase(item.result)}`}
+                    </span>
                   </span>
-                  <span className="block truncate text-xs text-muted-foreground">
-                    {item.actionId === action.actionId && ownGoal ? `Own goal · scored for ${goalTeam}` : `${item.team} · ${titleCase(item.actionType)}`}
+                  <span className="shrink-0 text-right font-sans text-xs tabular-nums">
+                    <span className="block">{formatActionTime(item.periodId, item.timeSeconds)}</span>
+                    <span className="block text-primary">{formatSignedVaep(item.vaepValue)}</span>
                   </span>
-                </span>
-                <span className="shrink-0 text-right font-sans text-xs tabular-nums">
-                  {formatActionTime(item.periodId, item.timeSeconds)}
-                </span>
+                </button>
               </li>
             ))}
           </ol>
         </>
       ) : (
         <p className="text-sm text-muted-foreground">
-          Same-possession detail is not available for this goal in the current event feed.
+          The goal and its preceding actions could not be located in this period’s event feed.
         </p>
       )}
     </PaperPanel>
@@ -314,16 +318,30 @@ function GoalStories({ actions, match, selectedActionId, teams, onSelectAction }
   );
 }
 
-function MatchHero({ match, matches, matchId, actionCount, playerCount, highlightCount, onMatchChange, onWatchReplay }: Readonly<{
+function MatchHero({ match, matches, matchId, actionCount, playerCount, highlightCount, matchSearch, teamSearch, teams, onMatchChange, onMatchSearchChange, onTeamSearchChange, onWatchReplay }: Readonly<{
   match?: Match;
   matches: Match[];
   matchId?: number;
   actionCount: number;
   playerCount: number;
   highlightCount: number;
+  matchSearch: string;
+  teamSearch: string;
+  teams: string[];
   onMatchChange: (id: number) => void;
+  onMatchSearchChange: (value: string) => void;
+  onTeamSearchChange: (value: string) => void;
   onWatchReplay: () => void;
 }>) {
+  const query = matchSearch.trim().toLowerCase();
+  const teamQuery = teamSearch.trim().toLowerCase();
+  const filteredMatches = matches.filter((item) => {
+    const searchable = `${item.homeTeam} ${item.awayTeam} ${item.competition} ${item.season} ${item.matchId}`.toLowerCase();
+    const teamMatches = !teamQuery || item.homeTeam.toLowerCase().includes(teamQuery) || item.awayTeam.toLowerCase().includes(teamQuery);
+    return teamMatches && (!query || searchable.includes(query));
+  });
+  const visibleMatches = filteredMatches.slice(0, 8);
+
   return (
     <section className="match-hero relative overflow-hidden" aria-label="Selected match">
       <div className="match-hero-lines" aria-hidden="true" />
@@ -351,21 +369,41 @@ function MatchHero({ match, matches, matchId, actionCount, playerCount, highligh
           ) : (
             <h1 className="match-team mt-4">No fixture selected</h1>
           )}
-          <div className="mt-5 flex flex-wrap items-end gap-x-5 gap-y-3">
-            <div className="match-fixture-select">
-              <CatalogSelect
-                aria-label="Select match"
-                label="Choose a fixture"
-                onChange={(event) => onMatchChange(Number(event.target.value))}
-                value={matchId ?? ''}
-              >
-                {matches.map((item) => (
-                  <option key={item.matchId} value={item.matchId}>
-                    {item.homeTeam} {item.homeScore}–{item.awayScore} {item.awayTeam} · {matchCompetition(item)}
-                  </option>
-                ))}
-              </CatalogSelect>
+          <div className="match-finder mt-5">
+            <div className="match-finder-fields">
+              <label className="grid gap-1.5">
+                <span className="label-meta">Search match</span>
+                <Input aria-label="Search matches" onChange={(event) => onMatchSearchChange(event.target.value)} placeholder="Team, competition, season, or match ID" value={matchSearch} />
+              </label>
+              <label className="grid gap-1.5">
+                <span className="label-meta">Filter by team</span>
+                <Input aria-label="Filter matches by team" list="match-team-options" onChange={(event) => onTeamSearchChange(event.target.value)} placeholder="Type or choose a team" value={teamSearch} />
+                <datalist id="match-team-options">{teams.map((name) => <option key={name} value={name} />)}</datalist>
+              </label>
             </div>
+            <div aria-label="Matching fixtures" className="match-finder-results">
+              {visibleMatches.map((item) => (
+                <button
+                  aria-current={item.matchId === matchId ? 'true' : undefined}
+                  className={cn('match-finder-result', item.matchId === matchId && 'match-finder-result-selected')}
+                  key={item.matchId}
+                  onClick={() => onMatchChange(item.matchId)}
+                  type="button"
+                >
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate font-semibold">{item.homeTeam} <span className="tabular-nums">{item.homeScore}–{item.awayScore}</span> {item.awayTeam}</span>
+                    <span className="block truncate text-xs opacity-75">{matchCompetition(item)} · {matchSeason(item)}</span>
+                  </span>
+                  {item.matchId === matchId && <span className="match-finder-current">Selected</span>}
+                </button>
+              ))}
+              {!visibleMatches.length && <p className="match-finder-empty">No matches match those filters. Clear a search field to broaden the list.</p>}
+            </div>
+            {filteredMatches.length > visibleMatches.length && (
+              <p className="match-finder-count">Showing {visibleMatches.length} of {filteredMatches.length} matches. Refine the search to find another fixture.</p>
+            )}
+          </div>
+          <div className="mt-3 flex flex-wrap items-end gap-x-5 gap-y-3">
             <div className="match-facts" aria-label="Match data summary">
               <span><strong>{actionCount.toLocaleString()}</strong> actions</span>
               <span><strong>{playerCount}</strong> players</span>
@@ -468,6 +506,11 @@ export default function ReplayPage() {
   const [zoneFilter, setZoneFilter] = useState('all');
   const [minVaep, setMinVaep] = useState(0);
   const [selectedSequence, setSelectedSequence] = useState(0);
+  const [matchSearch, setMatchSearch] = useState('');
+  const [teamSearch, setTeamSearch] = useState('');
+  const [playerSearch, setPlayerSearch] = useState('');
+  const [playerTeamFilter, setPlayerTeamFilter] = useState('all');
+  const [selectedPlayerId, setSelectedPlayerId] = useState<number | null>(null);
 
   const actions = useMemo(
     () => [...(actionsQuery.data ?? [])].sort((a, b) => a.timeSeconds - b.timeSeconds || a.id - b.id),
@@ -483,7 +526,7 @@ export default function ReplayPage() {
     [actions],
   );
   const standardPlayActions = useMemo(
-    () => actions.filter((item) => item.periodId !== 5),
+    () => actions.filter((item) => item.periodId !== 5 && !item.actionType.endsWith('_shootout')),
     [actions],
   );
   const players = useMemo(() => aggregatePlayers(standardPlayActions), [standardPlayActions]);
@@ -491,7 +534,6 @@ export default function ReplayPage() {
     () => Object.fromEntries(players.map((player) => [player.playerId, {
       actions: player.actions,
       totalVaep: player.totalVaep,
-      vaepPer90: player.vaepPer90,
     }])),
     [players],
   );
@@ -549,6 +591,9 @@ export default function ReplayPage() {
     setPlayerFilter('all');
     setTeamFilter('all');
     setTypeFilter('all');
+    setPlayerSearch('');
+    setPlayerTeamFilter('all');
+    setSelectedPlayerId(null);
   }, [matchId]);
 
   useEffect(() => {
@@ -584,21 +629,36 @@ export default function ReplayPage() {
   }
 
   const sequence = sequences[selectedSequence];
+  const playerTeams = [...new Set(players.map((player) => player.team))].sort();
+  const visiblePlayers = players.filter((player) =>
+    (playerTeamFilter === 'all' || player.team === playerTeamFilter)
+    && `${player.name} ${player.team}`.toLowerCase().includes(playerSearch.trim().toLowerCase()));
+  const selectedPlayer = players.find((player) => player.playerId === selectedPlayerId);
+  const selectedPlayerActions = selectedPlayer
+    ? standardPlayActions.filter((item) => item.playerId === selectedPlayer.playerId)
+    : [];
+  const selectedPlayerPositiveVaep = selectedPlayerActions.reduce((sum, item) => sum + Math.max(0, item.vaepValue), 0);
+  const selectedPlayerNegativeVaep = selectedPlayerActions.reduce((sum, item) => sum + Math.min(0, item.vaepValue), 0);
 
   return (
     <div className="space-y-8">
       <MatchHero
         actionCount={actions.length}
         highlightCount={actions.filter((item) => item.result.toLowerCase() === 'goal' || item.actionType.toLowerCase().includes('shot') || Math.abs(item.vaepValue) >= 0.08).length}
+        matchSearch={matchSearch}
         match={selectedMatch}
         matchId={matchId}
         matches={matches.data ?? []}
         onMatchChange={setMatchId}
+        onMatchSearchChange={setMatchSearch}
+        onTeamSearchChange={setTeamSearch}
         onWatchReplay={() => {
           setSection('Overview');
           window.setTimeout(() => document.getElementById('replay-pitch')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 0);
         }}
         playerCount={players.length}
+        teamSearch={teamSearch}
+        teams={[...new Set((matches.data ?? []).flatMap((item) => [item.homeTeam, item.awayTeam]))].sort()}
       />
 
       <MatchScorecard actions={standardPlayActions} match={selectedMatch} players={players} />
@@ -679,7 +739,7 @@ export default function ReplayPage() {
                     </label>
                   </div>
                   <ShotContext action={action} actions={actions} onSelectAction={selectActionId} />
-                  <GoalBuildUp action={action} actions={actions} teams={teams} />
+                  <GoalBuildUp action={action} actions={actions} onSelectAction={selectActionId} teams={teams} />
                 </div>
               </div>
               <PaperPanel>
@@ -820,6 +880,21 @@ export default function ReplayPage() {
           {(section === 'Overview' || section === 'Players') && (
             <section>
               <SectionHeading aside="Aggregated from the selected match only." kicker="Ledger" title="Player analysis" />
+              <div className="player-ledger-controls">
+                <label className="grid gap-1.5">
+                  <span className="label-meta">Find a player</span>
+                  <Input aria-label="Search players in this match" onChange={(event) => setPlayerSearch(event.target.value)} placeholder="Player or team name" value={playerSearch} />
+                </label>
+                <div aria-label="Filter players by team" className="player-team-filters">
+                  <span className="label-meta">Team</span>
+                  <div className="flex flex-wrap gap-2">
+                    <button aria-pressed={playerTeamFilter === 'all'} className={cn('player-team-filter', playerTeamFilter === 'all' && 'player-team-filter-active')} onClick={() => setPlayerTeamFilter('all')} type="button">Both teams</button>
+                    {playerTeams.map((team) => (
+                      <button aria-pressed={playerTeamFilter === team} className={cn('player-team-filter', playerTeamFilter === team && 'player-team-filter-active')} key={team} onClick={() => setPlayerTeamFilter(team)} type="button">{team}</button>
+                    ))}
+                  </div>
+                </div>
+              </div>
               <div className="overflow-x-auto border border-primary/20">
                 <Table>
                   <TableHeader>
@@ -828,20 +903,21 @@ export default function ReplayPage() {
                       <TableHead className="label-meta">Team</TableHead>
                       <TableHead className="label-meta text-right">Actions</TableHead>
                       <TableHead className="label-meta hidden text-right sm:table-cell">Successful</TableHead>
-                      <TableHead className="label-meta text-right">VAEP</TableHead>
-                      <TableHead className="label-meta hidden text-right md:table-cell">VAEP/90</TableHead>
+                      <TableHead className="label-meta text-right">Net VAEP sum</TableHead>
                       <TableHead className="label-meta hidden text-right lg:table-cell">Off.</TableHead>
                       <TableHead className="label-meta hidden text-right lg:table-cell">Def.</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {players.map((row) => (
+                    {visiblePlayers.map((row) => (
                       <TableRow
-                        className="cursor-pointer"
+                        aria-selected={selectedPlayerId === row.playerId}
+                        className={cn('cursor-pointer', selectedPlayerId === row.playerId && 'player-row-selected')}
                         key={row.playerId}
                         onClick={() => {
+                          setSelectedPlayerId(row.playerId);
                           setHoveredPlayerId(row.playerId);
-                          const related = actions.find((item) => item.playerId === row.playerId);
+                          const related = standardPlayActions.find((item) => item.playerId === row.playerId);
                           if (related) selectActionId(related.actionId);
                         }}
                         onMouseEnter={() => setHoveredPlayerId(row.playerId)}
@@ -852,14 +928,62 @@ export default function ReplayPage() {
                         <TableCell className="text-right tabular-nums">{row.actions}</TableCell>
                         <TableCell className="hidden text-right tabular-nums sm:table-cell">{row.successful}</TableCell>
                         <TableCell className="text-right font-medium tabular-nums">{formatSignedVaep(row.totalVaep)}</TableCell>
-                        <TableCell className="hidden text-right tabular-nums md:table-cell">{formatSignedVaep(row.vaepPer90)}</TableCell>
                         <TableCell className="hidden text-right tabular-nums lg:table-cell">{formatSignedVaep(row.offensive)}</TableCell>
                         <TableCell className="hidden text-right tabular-nums lg:table-cell">{formatSignedVaep(row.defensive)}</TableCell>
                       </TableRow>
                     ))}
+                    {!visiblePlayers.length && (
+                      <TableRow>
+                        <TableCell className="py-8 text-center text-muted-foreground" colSpan={7}>No players match those filters.</TableCell>
+                      </TableRow>
+                    )}
                   </TableBody>
                 </Table>
               </div>
+              {selectedPlayer && (
+                <PaperPanel className="mt-4">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <p className="label-meta">Player action ledger</p>
+                      <h3 className="mt-1 font-display text-2xl">{selectedPlayer.name}</h3>
+                      <p className="text-sm text-muted-foreground">{selectedPlayer.team} · {selectedPlayerActions.length} standard-play actions</p>
+                    </div>
+                    <Button onClick={() => setSelectedPlayerId(null)} size="sm" variant="outline" type="button">Close details</Button>
+                  </div>
+                  <div className="player-vaep-breakdown">
+                    <div><span>Net sum · all actions</span><strong>{formatSignedVaep(selectedPlayer.totalVaep)}</strong></div>
+                    <div><span>Positive action values</span><strong className="player-vaep-positive">{formatSignedVaep(selectedPlayerPositiveVaep)}</strong></div>
+                    <div><span>Negative action values</span><strong className="player-vaep-negative">{formatSignedVaep(selectedPlayerNegativeVaep)}</strong></div>
+                    <div><span>Attack · defence sums</span><strong>{formatSignedVaep(selectedPlayer.offensive)} · {formatSignedVaep(selectedPlayer.defensive)}</strong></div>
+                  </div>
+                  <p className="mt-4 text-xs leading-relaxed text-muted-foreground">
+                    Each row is one recorded action in match-clock order. Positive and negative values are separated for inspection; net total is the signed sum of every standard-play action, not the player’s single best action.
+                  </p>
+                  <ol aria-label={`${selectedPlayer.name} actions`} className="player-action-ledger">
+                    {selectedPlayerActions.map((item, index) => (
+                      <li key={item.id}>
+                        <button
+                          aria-label={`View action ${index + 1}: ${titleCase(item.actionType)} by ${item.playerName} at ${formatActionTime(item.periodId, item.timeSeconds)}, VAEP ${formatSignedVaep(item.vaepValue)}`}
+                          aria-current={item.actionId === action?.actionId ? 'step' : undefined}
+                          className={cn('player-action-row', item.actionId === action?.actionId && 'player-action-row-selected')}
+                          onClick={() => selectActionId(item.actionId)}
+                          type="button"
+                        >
+                          <span className="player-action-index">{String(index + 1).padStart(2, '0')}</span>
+                          <span className="min-w-0 flex-1">
+                            <strong className="block truncate">{titleCase(item.actionType)}</strong>
+                            <span className="block truncate text-xs text-muted-foreground">{item.team} · {titleCase(item.result)} · {pitchZone(item.startX, item.startY)}</span>
+                          </span>
+                          <span className="shrink-0 text-right">
+                            <span className="block text-xs tabular-nums">{formatActionTime(item.periodId, item.timeSeconds)}</span>
+                            <strong className={cn('block font-sans text-sm tabular-nums', item.vaepValue > 0 ? 'player-vaep-positive' : item.vaepValue < 0 ? 'player-vaep-negative' : 'text-muted-foreground')}>{formatSignedVaep(item.vaepValue)}</strong>
+                          </span>
+                        </button>
+                      </li>
+                    ))}
+                  </ol>
+                </PaperPanel>
+              )}
             </section>
           )}
 

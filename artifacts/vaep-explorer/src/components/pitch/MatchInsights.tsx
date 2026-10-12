@@ -74,6 +74,11 @@ export function MatchScorecard({ actions, match, players }: Readonly<{
     { label: 'Team VAEP', value: (stats) => formatSignedVaep(stats.vaep), amount: (stats) => Math.abs(stats.vaep) },
   ];
   const matchMvp = players[0];
+  const matchMvpActions = matchMvp
+    ? actions.filter((action) => action.playerId === matchMvp.playerId)
+    : [];
+  const mvpPositiveVaep = matchMvpActions.reduce((sum, action) => sum + Math.max(0, action.vaepValue), 0);
+  const mvpNegativeVaep = matchMvpActions.reduce((sum, action) => sum + Math.min(0, action.vaepValue), 0);
 
   return (
     <section aria-label="Match scorecard" className="scorecard">
@@ -83,7 +88,7 @@ export function MatchScorecard({ actions, match, players }: Readonly<{
           <h2 className="font-display text-3xl text-primary">Matchday scorecard</h2>
         </div>
         <p className="max-w-lg text-sm leading-relaxed text-muted-foreground">
-          Team figures are counted from the recorded on-ball actions. The MVP badge marks this match’s highest summed VAEP, not an official award.
+          Team figures are counted from the recorded on-ball actions. The MVP is ranked by the signed sum of all standard-play VAEP actions—not by one highest-valued action.
         </p>
       </div>
 
@@ -95,9 +100,13 @@ export function MatchScorecard({ actions, match, players }: Readonly<{
               <p className="mt-5 font-display text-3xl leading-tight">{matchMvp.name}</p>
               <p className="mt-1 text-sm text-muted-foreground">{matchMvp.team}</p>
               <p className="mt-6 font-display text-4xl text-primary">{formatSignedVaep(matchMvp.totalVaep)}</p>
-              <p className="label-meta mt-1">Total VAEP · {matchMvp.actions.toLocaleString()} actions</p>
+              <p className="label-meta mt-1">Net sum across {matchMvp.actions.toLocaleString()} standard-play actions</p>
+              <div className="mvp-vaep-breakdown">
+                <span>Positive sum <strong className="player-vaep-positive">{formatSignedVaep(mvpPositiveVaep)}</strong></span>
+                <span>Negative sum <strong className="player-vaep-negative">{formatSignedVaep(mvpNegativeVaep)}</strong></span>
+              </div>
               <p className="mt-4 border-t border-primary/15 pt-3 text-xs leading-relaxed text-muted-foreground">
-                Highest match-level sum of action VAEP. This is a model-based contribution indicator, not a goals-only award or complete player rating.
+                Highest player-level total after adding every positive and negative action value for this match. This is a model-based contribution indicator, not a goals-only award or complete player rating.
               </p>
             </>
           ) : (

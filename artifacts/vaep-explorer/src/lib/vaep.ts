@@ -52,7 +52,6 @@ export type PlayerMatchRow = {
   totalVaep: number;
   offensive: number;
   defensive: number;
-  vaepPer90: number;
 };
 
 export function aggregatePlayers(actions: Action[]): PlayerMatchRow[] {
@@ -67,7 +66,6 @@ export function aggregatePlayers(actions: Action[]): PlayerMatchRow[] {
       totalVaep: 0,
       offensive: 0,
       defensive: 0,
-      vaepPer90: 0,
     };
     existing.actions += 1;
     if (action.result === 'success' || action.result === 'goal') existing.successful += 1;
@@ -78,6 +76,5 @@ export function aggregatePlayers(actions: Action[]): PlayerMatchRow[] {
   }
 
   return [...map.values()]
-    .map((row) => ({ ...row, vaepPer90: row.totalVaep }))
     .sort((a, b) => b.totalVaep - a.totalVaep);
 }
