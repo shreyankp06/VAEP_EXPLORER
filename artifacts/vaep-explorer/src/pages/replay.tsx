@@ -4,7 +4,7 @@ import type { Action, Match } from '@workspace/api-client-react';
 
 import { CatalogSelect, CardGlyph, EngravedFootball, GoalGlyph, PaperPanel, SectionHeading, ShotGlyph, SubGlyph, VaepGlyph } from '@/components/archive/Ornaments';
 import { EngravedPitch, MiniPitch, type PlayerPitchDetail } from '@/components/pitch/EngravedPitch';
-import { KeyMoments, OnBallActivity, PlayerComparison } from '@/components/pitch/MatchInsights';
+import { KeyMoments, MatchScorecard, OnBallActivity, PlayerComparison } from '@/components/pitch/MatchInsights';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Slider } from '@/components/ui/slider';
@@ -254,42 +254,62 @@ function GoalStories({ actions, match, selectedActionId, teams, onSelectAction }
     );
   }
 
+  const goalsBySide = [
+    { key: 'home', team: teams[0] ?? match?.homeTeam ?? 'Home', goals: goals.filter((goal) => goal.goalTeam === 'home') },
+    { key: 'away', team: teams[1] ?? match?.awayTeam ?? 'Away', goals: goals.filter((goal) => goal.goalTeam === 'away') },
+  ] as const;
+
   return (
     <PaperPanel className="mt-5">
       <SectionHeading kicker="Score-changing moments" title="Every goal" />
       <p className="mb-4 text-sm leading-relaxed text-muted-foreground">
-        Start with the goals and score. Choose one to follow the recorded actions from that possession and see the scoring moment on the pitch.
+        Home and away goals have separate colours. Choose a goal to follow its recorded possession and see the scoring moment on the pitch.
       </p>
-      <ol className="grid gap-3 md:grid-cols-2">
-        {goals.map((goal) => {
-          const goalTeam = goal.goalTeam === 'home' ? teams[0] : teams[1];
-          const ownGoal = goal.result.toLowerCase() === 'owngoal';
-          return (
-            <li key={goal.actionId}>
-              <button
-                aria-label={`Goal: ${goalTeam}, ${goal.playerName}${ownGoal ? ', own goal' : ''}, ${formatActionTime(goal.periodId, goal.timeSeconds)}, score ${goal.goalScoreHome} to ${goal.goalScoreAway}`}
-                aria-pressed={goal.actionId === selectedActionId}
-                className={cn(
-                  'flex w-full items-center gap-4 border p-4 text-left transition-colors hover:bg-accent/50',
-                  goal.actionId === selectedActionId ? 'border-amber-500 bg-amber-500/10' : 'border-primary/20',
-                )}
-                onClick={() => onSelectAction(goal.actionId)}
-                type="button"
-              >
-                <span aria-hidden="true" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-500 text-lg font-bold text-black">G</span>
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate font-display text-lg">{goal.playerName}{ownGoal ? ' · own goal' : ''}</span>
-                  <span className="block truncate text-sm text-muted-foreground">{goalTeam} · {formatActionTime(goal.periodId, goal.timeSeconds)}</span>
-                </span>
-                <span className="shrink-0 text-right">
-                  <span className="block font-display text-2xl tabular-nums text-primary">{goal.goalScoreHome}–{goal.goalScoreAway}</span>
-                  {!ownGoal && <span className="block text-xs tabular-nums text-muted-foreground">{formatSignedVaep(goal.vaepValue)} VAEP</span>}
-                </span>
-              </button>
-            </li>
-          );
-        })}
-      </ol>
+      <div className="grid gap-4 md:grid-cols-2">
+        {goalsBySide.map((side) => (
+          <section aria-label={`${side.team} goals`} className={`goal-team-column goal-team-${side.key}`} key={side.key}>
+            <header className="goal-team-heading">
+              <span aria-hidden="true" className="goal-team-symbol">G</span>
+              <span className="min-w-0 flex-1">
+                <span className="label-meta">{side.key === 'home' ? 'Home' : 'Away'}</span>
+                <strong>{side.team}</strong>
+              </span>
+              <b>{side.goals.length}</b>
+            </header>
+            {side.goals.length ? (
+              <ol className="goal-team-list">
+                {side.goals.map((goal) => {
+                  const goalTeam = goal.goalTeam === 'home' ? teams[0] : teams[1];
+                  const ownGoal = goal.result.toLowerCase() === 'owngoal';
+                  return (
+                    <li key={goal.actionId}>
+                      <button
+                        aria-label={`Goal: ${goalTeam}, ${goal.playerName}${ownGoal ? ', own goal' : ''}, ${formatActionTime(goal.periodId, goal.timeSeconds)}, score ${goal.goalScoreHome} to ${goal.goalScoreAway}`}
+                        aria-pressed={goal.actionId === selectedActionId}
+                        className={cn('goal-story-card', goal.actionId === selectedActionId && 'goal-story-card-selected')}
+                        onClick={() => onSelectAction(goal.actionId)}
+                        type="button"
+                      >
+                        <span aria-hidden="true" className="goal-story-badge">G</span>
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate font-display text-lg">{goal.playerName}{ownGoal ? ' · own goal' : ''}</span>
+                          <span className="block truncate text-sm text-muted-foreground">{formatActionTime(goal.periodId, goal.timeSeconds)}</span>
+                        </span>
+                        <span className="shrink-0 text-right">
+                          <span className="block font-display text-2xl tabular-nums text-primary">{goal.goalScoreHome}–{goal.goalScoreAway}</span>
+                          {!ownGoal && <span className="block text-xs tabular-nums text-muted-foreground">{formatSignedVaep(goal.vaepValue)} VAEP</span>}
+                        </span>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ol>
+            ) : (
+              <p className="goal-team-empty">No goals recorded for this side.</p>
+            )}
+          </section>
+        ))}
+      </div>
     </PaperPanel>
   );
 }
@@ -317,14 +337,14 @@ function MatchHero({ match, matches, matchId, actionCount, playerCount, highligh
           {match ? (
             <div className="mt-5 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 sm:gap-5">
               <div className="min-w-0 text-right">
-                <p className="match-team">{match.homeTeam}</p>
+                <p className="match-team match-team-home">{match.homeTeam}</p>
                 <p className="match-side-label">Home</p>
               </div>
               <p className="match-score" aria-label={`${match.homeScore} to ${match.awayScore}`}>
                 <span>{match.homeScore}</span><span className="match-score-divider">:</span><span>{match.awayScore}</span>
               </p>
               <div className="min-w-0">
-                <p className="match-team">{match.awayTeam}</p>
+                <p className="match-team match-team-away">{match.awayTeam}</p>
                 <p className="match-side-label">Away</p>
               </div>
             </div>
@@ -462,7 +482,11 @@ export default function ReplayPage() {
     () => [...actions].sort((a, b) => Math.abs(b.vaepValue) - Math.abs(a.vaepValue)).slice(0, 10),
     [actions],
   );
-  const players = useMemo(() => aggregatePlayers(actions), [actions]);
+  const standardPlayActions = useMemo(
+    () => actions.filter((item) => item.periodId !== 5),
+    [actions],
+  );
+  const players = useMemo(() => aggregatePlayers(standardPlayActions), [standardPlayActions]);
   const playerDetails = useMemo<Record<number, PlayerPitchDetail>>(
     () => Object.fromEntries(players.map((player) => [player.playerId, {
       actions: player.actions,
@@ -576,6 +600,8 @@ export default function ReplayPage() {
         }}
         playerCount={players.length}
       />
+
+      <MatchScorecard actions={standardPlayActions} match={selectedMatch} players={players} />
 
       <aside className="border-l-4 border-primary bg-primary/5 px-4 py-3 text-sm leading-relaxed text-muted-foreground">
         <strong className="text-foreground">First time here?</strong> The score is the result. VAEP is a separate estimate of how each action changes the team’s chances of scoring and conceding; positive is better for that team, negative is worse. It is a guide to the match, not a replacement for watching it.

@@ -1,12 +1,148 @@
 import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { ChevronLeft, ChevronRight, Pause, Play } from 'lucide-react';
-import type { Action } from '@workspace/api-client-react';
+import type { Action, Match } from '@workspace/api-client-react';
 
 import { CatalogSelect, PaperPanel, SectionHeading } from '@/components/archive/Ornaments';
 import { Button } from '@/components/ui/button';
 import { MiniPitch } from '@/components/pitch/EngravedPitch';
 import { formatActionTime, formatSignedVaep, titleCase } from '@/lib/format';
 import { PITCH_HEIGHT, PITCH_WIDTH, type PlayerMatchRow } from '@/lib/vaep';
+
+type TeamMatchStats = {
+  goals: number;
+  shots: number;
+  passes: number;
+  completedPasses: number;
+  corners: number;
+  fouls: number;
+  defensiveActions: number;
+  vaep: number;
+};
+
+function collectTeamMatchStats(actions: Action[], team: string, goals: number): TeamMatchStats {
+  const teamActions = actions.filter((action) => action.periodId !== 5 && action.team === team);
+  const isType = (action: Action, type: string) =>
+    action.actionType.toLowerCase().replace(/[-_]/g, ' ').includes(type);
+  const count = (predicate: (action: Action) => boolean) => teamActions.filter(predicate).length;
+
+  return {
+    goals,
+    shots: count((action) => isType(action, 'shot')),
+    passes: count((action) => isType(action, 'pass')),
+    completedPasses: count((action) => isType(action, 'pass') && action.result.toLowerCase() === 'success'),
+    corners: count((action) => isType(action, 'corner')),
+    fouls: count((action) => isType(action, 'foul')),
+    defensiveActions: count((action) =>
+      isType(action, 'tackle') || isType(action, 'interception') || isType(action, 'clearance')),
+    vaep: teamActions.reduce((total, action) => total + action.vaepValue, 0),
+  };
+}
+
+export function MatchScorecard({ actions, match, players }: Readonly<{
+  actions: Action[];
+  match: Match | undefined;
+  players: PlayerMatchRow[];
+}>) {
+  if (!match) return null;
+
+  const sides = [
+    { key: 'home', name: match.homeTeam, score: match.homeScore, colorClass: 'scorecard-home' },
+    { key: 'away', name: match.awayTeam, score: match.awayScore, colorClass: 'scorecard-away' },
+  ] as const;
+  const teamStats = sides.map((side) =>
+    collectTeamMatchStats(actions, side.name, side.score));
+  const statRows: { label: string; value: (stats: TeamMatchStats) => string; amount: (stats: TeamMatchStats) => number }[] = [
+    { label: 'Goals', value: (stats) => String(stats.goals), amount: (stats) => stats.goals },
+    { label: 'Shots', value: (stats) => String(stats.shots), amount: (stats) => stats.shots },
+    {
+      label: 'Passes completed',
+      value: (stats) => `${stats.completedPasses} / ${stats.passes}`,
+      amount: (stats) => stats.completedPasses,
+    },
+    {
+      label: 'Pass completion',
+      value: (stats) => `${stats.passes ? Math.round((stats.completedPasses / stats.passes) * 100) : 0}%`,
+      amount: (stats) => stats.passes ? stats.completedPasses / stats.passes : 0,
+    },
+    { label: 'Corners', value: (stats) => String(stats.corners), amount: (stats) => stats.corners },
+    { label: 'Fouls', value: (stats) => String(stats.fouls), amount: (stats) => stats.fouls },
+    {
+      label: 'Tackles · interceptions · clearances',
+      value: (stats) => String(stats.defensiveActions),
+      amount: (stats) => stats.defensiveActions,
+    },
+    { label: 'Team VAEP', value: (stats) => formatSignedVaep(stats.vaep), amount: (stats) => Math.abs(stats.vaep) },
+  ];
+  const matchMvp = players[0];
+
+  return (
+    <section aria-label="Match scorecard" className="scorecard">
+      <div className="scorecard-heading">
+        <div>
+          <p className="label-meta">The match at a glance</p>
+          <h2 className="font-display text-3xl text-primary">Matchday scorecard</h2>
+        </div>
+        <p className="max-w-lg text-sm leading-relaxed text-muted-foreground">
+          Team figures are counted from the recorded on-ball actions. The MVP badge marks this match’s highest summed VAEP, not an official award.
+        </p>
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-[minmax(15rem,0.75fr)_minmax(0,1.6fr)]">
+        <div className="scorecard-mvp">
+          <p className="label-meta">VAEP match MVP</p>
+          {matchMvp ? (
+            <>
+              <p className="mt-5 font-display text-3xl leading-tight">{matchMvp.name}</p>
+              <p className="mt-1 text-sm text-muted-foreground">{matchMvp.team}</p>
+              <p className="mt-6 font-display text-4xl text-primary">{formatSignedVaep(matchMvp.totalVaep)}</p>
+              <p className="label-meta mt-1">Total VAEP · {matchMvp.actions.toLocaleString()} actions</p>
+              <p className="mt-4 border-t border-primary/15 pt-3 text-xs leading-relaxed text-muted-foreground">
+                Highest match-level sum of action VAEP. This is a model-based contribution indicator, not a goals-only award or complete player rating.
+              </p>
+            </>
+          ) : (
+            <p className="mt-5 text-sm text-muted-foreground">No standard-play player actions are available for this match.</p>
+          )}
+        </div>
+
+        <div className="scorecard-stats">
+          <div className="scorecard-team-headings">
+            {sides.map((side, index) => (
+              <div className={`scorecard-team-name ${side.colorClass}`} key={side.key}>
+                <span>{side.key === 'home' ? 'Home' : 'Away'}</span>
+                <strong>{side.name}</strong>
+                <b>{side.score}</b>
+                <span className="sr-only">{teamStats[index].goals} goals</span>
+              </div>
+            ))}
+          </div>
+          <div className="scorecard-rows">
+            {statRows.map((row) => {
+              const values = teamStats.map(row.amount);
+              const max = Math.max(...values, 0.001);
+              return (
+                <div className="scorecard-stat-row" key={row.label}>
+                  <div className="scorecard-stat-values">
+                    <strong className="scorecard-stat-home">{row.value(teamStats[0])}</strong>
+                    <span>{row.label}</span>
+                    <strong className="scorecard-stat-away">{row.value(teamStats[1])}</strong>
+                  </div>
+                  <div aria-hidden="true" className="scorecard-bars">
+                    <span className="scorecard-bar-home" style={{ width: `${values[0] / max * 100}%` }} />
+                    <span className="scorecard-bar-away" style={{ width: `${values[1] / max * 100}%` }} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          <p className="scorecard-note">
+            Stats reflect the available event feed; possession, shots on target, and card totals are not inferred when they are not explicitly available.
+          </p>
+        </div>
+      </div>
+    </section>
+  );
+}
 
 function isKeyMoment(action: Action) {
   const type = action.actionType.toLowerCase().replace(/[-_]/g, ' ');
