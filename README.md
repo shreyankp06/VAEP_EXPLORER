@@ -54,6 +54,15 @@ For more detail, see [SUPABASE_SETUP.md](SUPABASE_SETUP.md).
 
 ## Install and run
 
+```cmd
+Terminal 1: Backend Server
+pnpm --filter @workspace/api-server build
+pnpm --filter @workspace/api-server start
+
+Terminal 2: Frontend Explorer
+pnpm --filter @workspace/vaep-explorer dev
+```
+
 ```powershell
 pnpm install --frozen-lockfile
 pnpm db:setup
