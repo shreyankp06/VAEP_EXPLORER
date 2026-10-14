@@ -42,11 +42,32 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for the component and data-flow design.
 - A Supabase project
 - Python 3.11+ only when regenerating VAEP data
 
+## Get the project
+
+The repository is private. Before contributors can access it, grant them access
+to `shreyankp06/DWM_proj` on GitHub. Once they have access, they can either fork
+the repository on GitHub and clone their fork, or clone the project directly:
+
+```powershell
+git clone https://github.com/shreyankp06/DWM_proj.git
+cd DWM_proj
+```
+
+To clone a fork instead, replace the URL with the contributor's fork URL.
+
 ## Configure Supabase
 
 1. In Supabase, open **SQL Editor** and run `supabase/schema.sql`, or use `pnpm db:setup` after configuring `.env`.
 2. Open **Connect** and copy a PostgreSQL direct or session-pooler connection string.
-3. Copy `.env.example` to `.env` and replace `DATABASE_URL` with that connection string.
+3. From the repository root, create a local environment file and set `DATABASE_URL`:
+
+   ```powershell
+   Copy-Item .env.example .env
+   notepad .env
+   ```
+
+   Replace the `DATABASE_URL` value with the connection string provided by the
+   project owner. It must begin with `postgres://` or `postgresql://`.
 
 `DATABASE_URL` must begin with `postgres://` or `postgresql://`; the `https://<project>.supabase.co` project URL is not a database connection string. Keep `.env` private. The browser never receives database credentials.
 
@@ -54,13 +75,14 @@ For more detail, see [SUPABASE_SETUP.md](SUPABASE_SETUP.md).
 
 ## Install and run
 
+Run these commands from the repository root after configuring `.env`:
+
 ```powershell
 pnpm install --frozen-lockfile
 pnpm db:setup
 pnpm db:check
 
 $env:PORT = "3000"
-$env:DATABASE_URL = (Get-Content .env | Where-Object { $_ -like "DATABASE_URL=*" }).Substring(13)
 pnpm --filter @workspace/api-server build
 pnpm --filter @workspace/api-server start
 ```
@@ -75,6 +97,12 @@ pnpm --filter @workspace/vaep-explorer dev
 ```
 
 Open `http://localhost:5173`.
+
+Each contributor should keep their own `.env` file on their local machine.
+Never commit `.env`, paste `DATABASE_URL` into source files or GitHub, or send
+database credentials in a public channel. The `.env` file is excluded by
+`.gitignore`; share credentials only with trusted contributors using a secure
+channel.
 
 ## Load real data
 
