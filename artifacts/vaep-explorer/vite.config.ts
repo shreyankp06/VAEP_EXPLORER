@@ -4,7 +4,7 @@ import tailwindcss from '@tailwindcss/vite';
 import { defineConfig } from 'vite';
 
 
-const rawPort = process.env.PORT ?? '5173';
+const rawPort = process.env.PORT ?? '4173';
 
 const port = Number(rawPort);
 
