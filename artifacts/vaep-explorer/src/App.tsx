@@ -1,11 +1,15 @@
 import { lazy, Suspense } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { setBaseUrl } from '@workspace/api-client-react';
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import NotFound from '@/pages/not-found';
 import { Route, Switch, Router as WouterRouter } from 'wouter';
 
 import { Layout } from '@/components/layout/Layout';
+
+setBaseUrl(import.meta.env.VITE_API_URL || null);
+
 const DashboardPage = lazy(() => import('@/pages/dashboard'));
 const LeaderboardPage = lazy(() => import('@/pages/leaderboard'));
 const ReplayPage = lazy(() => import('@/pages/replay'));
