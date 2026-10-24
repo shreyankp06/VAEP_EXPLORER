@@ -420,6 +420,21 @@
     color: hsl(var(--muted-foreground));
   }
 
+  .music-reactive-text {
+    transition: color 160ms ease-out, text-shadow 160ms ease-out;
+  }
+
+  :root[data-music-active='true'] .music-reactive-text {
+    color: color-mix(in srgb, currentColor, #d9f36c var(--music-tint-alpha, 0%));
+    text-shadow: 0 0 var(--music-glow-blur, 0px) color-mix(in srgb, #d9f36c var(--music-glow-alpha, 0%), transparent);
+    animation: music-glow-breathe 3.6s ease-in-out infinite;
+  }
+
+  @keyframes music-glow-breathe {
+    0%, 100% { filter: brightness(1); }
+    50% { filter: brightness(1.08); }
+  }
+
   .rule-double {
     border-top: 1px solid hsl(var(--primary) / 0.45);
     border-bottom: 1px solid hsl(var(--primary) / 0.45);
@@ -1537,6 +1552,12 @@
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
+  }
+
+  .music-reactive-text {
+    animation: none !important;
+    filter: none !important;
+    transition: none !important;
   }
 
   button,

@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { Link, useLocation } from 'wouter';
+import { BackgroundMusic } from '@/components/layout/BackgroundMusic';
 import { cn } from '@/lib/utils';
 
 const NAV_ITEMS = [
@@ -18,7 +19,7 @@ export function Layout({ children }: { children: ReactNode }) {
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-x-6 gap-y-3 px-4 py-3 md:px-8">
           <div className="flex min-w-0 items-center gap-3 sm:gap-5">
             <Link href="/" className="group shrink-0">
-              <p className="font-display text-3xl font-semibold leading-none tracking-tight text-primary sm:text-4xl">
+              <p className="music-reactive-text font-display text-3xl font-semibold leading-none tracking-tight text-primary sm:text-4xl">
                 VAEP <span className="italic font-medium">Explorer</span>
               </p>
             </Link>
@@ -28,23 +29,26 @@ export function Layout({ children }: { children: ReactNode }) {
               <p className="mt-1 font-sans text-xs text-primary">Live match archive</p>
             </div>
           </div>
-          <nav aria-label="Primary" className="flex max-w-full gap-1 overflow-x-auto border-y border-primary/20 py-1 sm:border-y-0 sm:py-0">
-            {NAV_ITEMS.map((item) => {
-              const active = location === item.href;
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={cn(
-                    'shrink-0 px-3 py-2 font-sans text-[0.68rem] font-semibold uppercase tracking-[0.16em] transition-colors sm:px-3',
-                    active ? 'text-primary' : 'text-muted-foreground hover:text-primary',
-                  )}
-                >
-                  <span className={cn('border-b', active ? 'border-primary pb-1' : 'border-transparent')}>{item.label}</span>
-                </Link>
-              );
-            })}
-          </nav>
+          <div className="flex min-w-0 flex-wrap items-center justify-end gap-x-4 gap-y-2">
+            <nav aria-label="Primary" className="flex max-w-full gap-1 overflow-x-auto border-y border-primary/20 py-1 sm:border-y-0 sm:py-0">
+              {NAV_ITEMS.map((item) => {
+                const active = location === item.href;
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={cn(
+                      'shrink-0 px-3 py-2 font-sans text-[0.68rem] font-semibold uppercase tracking-[0.16em] transition-colors sm:px-3',
+                      active ? 'text-primary' : 'text-muted-foreground hover:text-primary',
+                    )}
+                  >
+                    <span className={cn('border-b', active ? 'border-primary pb-1' : 'border-transparent')}>{item.label}</span>
+                  </Link>
+                );
+              })}
+            </nav>
+            <BackgroundMusic />
+          </div>
         </div>
       </header>
       <main className="mx-auto w-full max-w-7xl px-4 py-6 md:px-8 md:py-8">{children}</main>
