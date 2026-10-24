@@ -19,9 +19,18 @@ export function Layout({ children }: { children: ReactNode }) {
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-x-6 gap-y-3 px-4 py-3 md:px-8">
           <div className="flex min-w-0 items-center gap-3 sm:gap-5">
             <Link href="/" className="group shrink-0">
-              <p className="music-reactive-text font-display text-3xl font-semibold leading-none tracking-tight text-primary sm:text-4xl">
-                VAEP <span className="italic font-medium">Explorer</span>
-              </p>
+              <span className="flex items-center gap-2.5 sm:gap-3">
+                <img
+                  alt=""
+                  className="size-11 rounded-lg bg-white object-contain p-0.5 sm:size-12"
+                  height={48}
+                  src="/vaep-logo.png"
+                  width={48}
+                />
+                <span className="music-reactive-text font-display text-3xl font-semibold leading-none tracking-tight text-primary sm:text-4xl">
+                  VAEP <span className="italic font-medium">Explorer</span>
+                </span>
+              </span>
             </Link>
             <span aria-hidden="true" className="hidden h-9 w-px bg-primary/20 sm:block" />
             <div className="hidden text-left sm:block">
