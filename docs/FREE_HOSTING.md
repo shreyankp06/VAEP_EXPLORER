@@ -25,14 +25,16 @@ variables.
 ## 3. Deploy the website to Vercel
 
 1. Sign in to Vercel and import this GitHub repository.
-2. Set the project root directory to the repository root and select the same
-   branch used for the Render service. The root `vercel.json` supplies the
-   install, build, output, and single-page-app routing configuration.
+2. Set the project root directory to `artifacts/vaep-explorer` and select the
+   same branch used for the Render service. The app's `vercel.json` supplies
+   the install, build, output, and single-page-app routing configuration.
 3. Add the environment variable `VITE_API_URL` with the public Render service
    URL (for example, `https://vaep-explorer-api.onrender.com`). Do not add a
    trailing slash.
 4. Deploy and open the Vercel URL. The frontend build embeds this public API
-   URL; redeploy Vercel after changing it.
+   URL; redeploy Vercel after changing it. In **Settings → Build and
+   Deployment**, disable any Build Command and Output Directory overrides so
+   Vercel uses the app's `vercel.json`.
 
 ## 4. Verify
 
